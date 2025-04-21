@@ -7,17 +7,18 @@ use std::ops::{Index, IndexMut, Mul};
 pub type SqMatrix<const N: usize> = Matrix<N, N>;
 
 #[derive(Debug, Clone)]
-pub struct Matrix<const ROWS: usize, const COLS: usize> {
-    data: Vec<f64>,
+pub struct Matrix<const ROWS: usize, const COLS: usize> 
+where [(); ROWS * COLS]:,
+{
+    data: [f64; ROWS * COLS]
 }
 
-impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> {
+impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> 
+where [(); ROWS * COLS]:,
+{
     pub fn new() -> Self {
-        let rows = ROWS;
-        let cols = COLS;
-        let total = rows * cols;
         Matrix {
-            data: vec![0.0; total],
+            data: [0.0; ROWS * COLS],
         }
     }
     pub fn from_array(array: [[f64; COLS]; ROWS]) -> Self {
@@ -29,7 +30,9 @@ impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> {
         }
         mat
     }
-    pub fn transpose(&self) -> Matrix<COLS, ROWS> {
+    pub fn transpose(&self) -> Matrix<COLS, ROWS> 
+        where [(); COLS * ROWS]:,
+    {
         let mut transposed: Matrix<COLS, ROWS> = Matrix::new();
         for i in 0..ROWS {
             for j in 0..COLS {
@@ -40,7 +43,9 @@ impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> {
     }
 }
 
-impl<const N: usize> Matrix<N, N> {
+impl<const N: usize> Matrix<N, N> 
+    where [(); N * N]:,
+    {
     pub fn eye() -> Self {
         let mut mat: Matrix<N, N> = Matrix::new();
         for i in 0..N {
@@ -148,7 +153,9 @@ impl Matrix<2, 2> {
     }
 }
 
-impl<const ROWS: usize, const COLS: usize> Index<(usize, usize)> for Matrix<ROWS, COLS> {
+impl<const ROWS: usize, const COLS: usize> Index<(usize, usize)> for Matrix<ROWS, COLS> 
+    where [(); ROWS * COLS]:,
+{
     type Output = f64;
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
         debug_assert!(row < ROWS && col < COLS, "Index out of bounds");
@@ -156,14 +163,18 @@ impl<const ROWS: usize, const COLS: usize> Index<(usize, usize)> for Matrix<ROWS
     }
 }
 
-impl<const ROWS: usize, const COLS: usize> IndexMut<(usize, usize)> for Matrix<ROWS, COLS> {
+impl<const ROWS: usize, const COLS: usize> IndexMut<(usize, usize)> for Matrix<ROWS, COLS> 
+    where [(); ROWS * COLS]:,
+{
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
         debug_assert!(row < ROWS && col < COLS, "Index out of bounds");
         &mut self.data[row * COLS + col]
     }
 }
 
-impl<const ROWS: usize, const COLS: usize> fmt::Display for Matrix<ROWS, COLS> {
+impl<const ROWS: usize, const COLS: usize> fmt::Display for Matrix<ROWS, COLS> 
+where [(); ROWS * COLS]:,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for row in 0..ROWS {
             write!(f, "[")?;
@@ -180,7 +191,9 @@ impl<const ROWS: usize, const COLS: usize> fmt::Display for Matrix<ROWS, COLS> {
     }
 }
 
-impl<const ROWS: usize, const COLS: usize> PartialEq for Matrix<ROWS, COLS> {
+impl<const ROWS: usize, const COLS: usize> PartialEq for Matrix<ROWS, COLS> 
+where [(); ROWS * COLS]:,
+{
     fn eq(&self, other: &Self) -> bool {
         for i in 0..self.data.len() {
             if !self.data[i].approx_eq(&other.data[i]) {
@@ -191,9 +204,16 @@ impl<const ROWS: usize, const COLS: usize> PartialEq for Matrix<ROWS, COLS> {
     }
 }
 
-impl<'a, 'b, const N: usize> Mul<&'b Matrix<N, N>> for &'a Matrix<N, N> {
+
+impl<'a, 'b, const N: usize> Mul<&'b Matrix<N, N>> for &'a Matrix<N, N> 
+where 
+    [(); N*N]:,
+{
     type Output = Matrix<N, N>;
-    fn mul(self, rhs: &'b Matrix<N, N>) -> Self::Output {
+    fn mul(self, rhs: &'b Matrix<N, N>) -> Self::Output 
+    where 
+        [(); N*N]:,
+    {
         let mut result = Matrix::<N, N>::new();
         for row in 0..N {
             for col in 0..N {
@@ -208,9 +228,13 @@ impl<'a, 'b, const N: usize> Mul<&'b Matrix<N, N>> for &'a Matrix<N, N> {
     }
 }
 
-impl<const N: usize> Mul for Matrix<N, N> {
+impl<const N: usize> Mul for Matrix<N, N> 
+where [(); N*N]:,
+{
     type Output = Matrix<N, N>;
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self::Output 
+    where [(); N*N]:,
+    {
         &self * &rhs
     }
 }
@@ -248,9 +272,13 @@ impl Mul<Vec4> for Matrix<4, 4> {
 impl<const ROWS: usize, const COLS: usize, I> Mul<I> for Matrix<ROWS, COLS>
 where
     I: ToPrimitive + Copy,
+    [(); ROWS * COLS]:,
 {
     type Output = Matrix<ROWS, COLS>;
-    fn mul(self, rhs: I) -> Self::Output {
+    fn mul(self, rhs: I) -> Self::Output 
+    where 
+    [(); ROWS * COLS]:,
+    {
         let scalar = rhs.to_f64().expect("Failed to convert to f64");
         let mut result = Matrix::<ROWS, COLS>::new();
         for i in 0..self.data.len() {
