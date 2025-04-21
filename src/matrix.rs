@@ -49,6 +49,67 @@ impl<const N: usize> Matrix<N, N> {
     }
 }
 
+impl Matrix<4, 4> {
+    fn submatrix(&self, row: usize, col: usize) -> Matrix<3, 3> {
+        let mut result = Matrix::<3, 3>::new();
+        let mut dst_row = 0;
+        for src_row in 0..4 {
+            if src_row == row {
+                continue;
+            }
+            let mut dst_col = 0;
+            for src_col in 0..4 {
+                if src_col == col {
+                    continue;
+                }
+                result[(dst_row, dst_col)] = self[(src_row, src_col)];
+                dst_col += 1;
+            }
+            dst_row += 1;
+        }
+        result
+    }
+}
+
+impl Matrix<3, 3> {
+    fn submatrix(&self, row: usize, col: usize) -> Matrix<2, 2> {
+        let mut result = Matrix::<2, 2>::new();
+        let mut dst_row = 0;
+        for src_row in 0..3 {
+            if src_row == row {
+                continue;
+            }
+            let mut dst_col = 0;
+            for src_col in 0..3 {
+                if src_col == col {
+                    continue;
+                }
+                result[(dst_row, dst_col)] = self[(src_row, src_col)];
+                dst_col += 1;
+            }
+            dst_row += 1;
+        }
+        result
+    }
+
+    fn minor(&self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).det()
+    }
+
+    fn cofactor(&self, row: usize, col: usize) -> f64 {
+        if row + col % 2 == 0 {
+            return self.minor(row, col);
+        }
+        -self.minor(row, col)
+    }
+}
+
+impl Matrix<2, 2> {
+    pub fn det(&self) -> f64 {
+        self[(0,0)]*self[(1,1)] - self[(0,1)]*self[(1,0)]
+    }
+}
+
 impl<const ROWS: usize, const COLS: usize> Index<(usize, usize)> for Matrix<ROWS, COLS> {
     type Output = f64;
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
@@ -303,8 +364,58 @@ pub mod tests {
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0]
         ];
+
+        let t_val = [
+            [1.0, 4.0],
+            [2.0, 5.0],
+            [3.0, 6.0]
+        ];
         let mat = Matrix::from_array(val);
         let t = mat.transpose();
-        
+        let t_test = Matrix::from_array(t_val);
+        assert_eq!(t_test, t);
+        assert_eq!(mat.transpose().transpose(), mat);
+    }
+
+    #[test]
+    fn submatrix() {
+        let val = [
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0]
+        ];
+        let mat = Matrix::from_array(val);
+        let sub = mat.submatrix(1, 1);
+        assert_eq!(Matrix::from_array([[1.0, 3.0], [7.0, 9.0]]), sub);
+    }
+    #[test]
+    fn minor() {
+        let val = [
+            [3.0, 5.0, 0.0],
+            [2.0, -1.0, -7.0],
+            [6.0, -1.0, 5.0]
+        ];
+        let mat = Matrix::from_array(val);
+        let det = mat.minor(1, 0);
+        assert_eq!(det, 25.0);
+    }
+    #[test]
+    fn cofactor() {
+        let val = [
+            [3.0, 5.0, 0.0],
+            [2.0, -1.0, -7.0],
+            [6.0, -1.0, 5.0]
+        ];
+        let mat = Matrix::from_array(val);
+        let minor1 = mat.minor(0, 0);
+        assert_eq!(minor1, -12.0);
+        let cofactor1 = mat.cofactor(0, 0);
+        assert_eq!(cofactor1, -12.0);
+        let minor2 = mat.minor(1, 0);
+        assert_eq!(minor2, 25.0);
+        let cofactor2 = mat.cofactor(1, 0);
+        assert_eq!(cofactor2, -25.0);
+
+
     }
 }
