@@ -69,6 +69,36 @@ impl Matrix<4, 4> {
         }
         result
     }
+    fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let minor = self.submatrix(row, col).det();
+        if (row + col) % 2 == 0 {
+            return minor;
+        }
+        -minor
+    }
+    pub fn det(&self) -> f64 {
+        let mut det = 0.0;
+        for col in 0..4 {
+            det += self[(0, col)] * self.cofactor(0, col);
+        }
+        det
+    }
+    pub fn inverse(&self) -> Matrix<4,4,> {
+        let det = self.det();
+        if det.approx_eq(&0.0) {
+            panic!("Tried to invert non invertable Matrix!");
+        }
+
+        let mut inverse: Matrix<4, 4> = Matrix::new();
+        for row in 0..4 {
+            for col in 0..4 {
+                let c = self.cofactor(row, col);
+                inverse[(col, row)] = c / det;
+            }
+        }
+        inverse
+    }
+
 }
 
 impl Matrix<3, 3> {
@@ -101,6 +131,14 @@ impl Matrix<3, 3> {
             return self.minor(row, col);
         }
         -self.minor(row, col)
+    }
+
+    pub fn det(&self) -> f64 {
+        let mut det = 0.0;
+        for col in 0..3 {
+            det += self[(0, col)] * self.cofactor(0, col);
+        }
+        det
     }
 }
 
@@ -153,9 +191,10 @@ impl<const ROWS: usize, const COLS: usize> PartialEq for Matrix<ROWS, COLS> {
     }
 }
 
-impl<const N: usize> Mul for Matrix<N, N> {
+
+impl<'a, 'b, const N: usize> Mul<&'b Matrix<N, N>> for &'a Matrix<N, N> {
     type Output = Matrix<N, N>;
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: &'b Matrix<N, N>) -> Self::Output {
         let mut result = Matrix::<N, N>::new();
         for row in 0..N {
             for col in 0..N {
@@ -170,9 +209,16 @@ impl<const N: usize> Mul for Matrix<N, N> {
     }
 }
 
-impl Mul<Vec4> for Matrix<4, 4> {
+impl<const N: usize> Mul for Matrix<N, N> {
+    type Output = Matrix<N, N>;
+    fn mul(self, rhs: Self) -> Self::Output {
+        &self * &rhs
+    }
+}
+
+impl<'a, 'b> Mul<&'b Vec4> for &'a Matrix<4,4> {
     type Output = Vec4;
-    fn mul(self, rhs: Vec4) -> Self::Output {
+    fn mul(self, rhs: &'b Vec4) -> Self::Output {
         let components = [rhs.x, rhs.y, rhs.z, rhs.w];
         let mut result = [0.0; 4];
 
@@ -182,6 +228,13 @@ impl Mul<Vec4> for Matrix<4, 4> {
             }
         }
         Vec4::from_array(result)
+    }
+}
+
+impl Mul<Vec4> for Matrix<4, 4> {
+    type Output = Vec4;
+    fn mul(self, rhs: Vec4) -> Self::Output {
+        &self * &rhs
     }
 }
 
@@ -396,5 +449,59 @@ pub mod tests {
         assert_eq!(minor2, 25.0);
         let cofactor2 = mat.cofactor(1, 0);
         assert_eq!(cofactor2, -25.0);
+    }
+
+    #[test]
+    fn det() {
+        let val = [[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]];
+        let m = Matrix::from_array(val);
+        assert_eq!(-196.0, m.det());
+        let a_values = [
+            [-2.0, -8.0, 3.0, 5.0],
+            [-3.0, 1.0, 7.0, 3.0],
+            [1.0, 2.0, -9.0, 6.0],
+            [-6.0, 7.0, 7.0, -9.0],
+        ];
+        let m = Matrix::from_array(a_values);
+        assert_eq!(-4071.0, m.det());
+    }
+    #[test]
+    fn inverse() {
+        let a_values: [[f64; 4]; 4] = [
+            [ 8.0,  -5.0,  9.0,  2.0],
+            [ 7.0,   5.0,  6.0,  1.0],
+            [-6.0,   0.0,  9.0,  6.0],
+            [-3.0,   0.0, -9.0, -4.0],
+        ];
+        let m = Matrix::from_array(a_values);
+        let a_inverse_values: [[f64; 4]; 4] = [
+            [-0.15385, -0.15385, -0.28205, -0.53846],
+            [-0.07692,  0.12308,  0.02564,  0.03077],
+            [ 0.35897,  0.35897,  0.43590,  0.92308],
+            [-0.69231, -0.69231, -0.76923, -1.92308],
+        ];
+        let m_inverse = Matrix::from_array(a_inverse_values);
+        assert!(m.inverse() == m_inverse);
+
+        let a_values: [[f64; 4]; 4] = [
+            [  3.0,  -9.0,  7.0,  3.0],
+            [  3.0,  -8.0,  2.0, -9.0],
+            [ -4.0,   4.0,  4.0,  1.0],
+            [ -6.0,   5.0, -1.0,  1.0],
+        ];
+        let a = Matrix::from_array(a_values);
+        let b_values: [[f64; 4]; 4] = [
+            [ 8.0,  2.0,  2.0,  2.0],
+            [ 3.0, -1.0,  7.0,  0.0],
+            [ 7.0,  0.0,  5.0,  4.0],
+            [ 6.0, -2.0,  0.0,  5.0],
+        ];
+        let b = Matrix::from_array(b_values);
+
+        let c = &a * &b;
+        assert!(&c * &b.inverse() == a);
+
+        let eye = Matrix::<4,4>::eye();
+        assert!(eye == eye.inverse());
     }
 }
