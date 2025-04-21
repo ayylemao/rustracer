@@ -1,6 +1,9 @@
 pub mod canvas;
 pub mod color;
+pub mod intersection;
 pub mod math;
 pub mod matrix;
+pub mod ray;
+pub mod shape;
 pub mod transform;
 pub mod vec4;

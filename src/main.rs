@@ -1,7 +1,6 @@
-use std::f64::consts::PI;
+use std::io::{BufWriter, Write};
 
-use raytracer::{canvas::Canvas, color::Color, vec4::Vec4, matrix::Matrix};
-
+use raytracer::{canvas::Canvas, color::Color, matrix::Matrix, vec4::Vec4};
 
 fn main() {
     let mut canvas = Canvas::new(100, 100);
@@ -19,9 +18,11 @@ fn main() {
         let y = translated.y.round() as usize;
 
         if x < canvas.width && y < canvas.height {
-            canvas[(x, y)] = Color::new(1.0, 0.0, 0.0);
+            canvas[(x, y)] = Color::new(1.0, 1.0, 1.0);
         }
     }
 
-    println!("{}", canvas.to_ppm());
+    let file = std::fs::File::create("test.ppm").unwrap();
+    let mut buff = BufWriter::new(file);
+    buff.write(canvas.to_ppm().as_bytes()).unwrap();
 }

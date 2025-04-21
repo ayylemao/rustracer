@@ -1,8 +1,8 @@
 use crate::math::ApproxEq;
 use crate::vec4::Vec4;
+use num_traits::ToPrimitive;
 use std::fmt;
 use std::ops::{Index, IndexMut, Mul};
-use num_traits::ToPrimitive;
 
 pub type SqMatrix<const N: usize> = Matrix<N, N>;
 
@@ -248,17 +248,17 @@ impl Mul<Vec4> for Matrix<4, 4> {
 impl<const ROWS: usize, const COLS: usize, I> Mul<I> for Matrix<ROWS, COLS>
 where
     I: ToPrimitive + Copy,
-    {
-        type Output = Matrix<ROWS, COLS>;
-        fn mul(self, rhs: I) -> Self::Output {
-            let scalar = rhs.to_f64().expect("Failed to convert to f64");
-            let mut result = Matrix::<ROWS, COLS>::new();
-            for i in 0..self.data.len() {
-                result.data[i] = self.data[i] * scalar;
-            }
-            result
+{
+    type Output = Matrix<ROWS, COLS>;
+    fn mul(self, rhs: I) -> Self::Output {
+        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let mut result = Matrix::<ROWS, COLS>::new();
+        for i in 0..self.data.len() {
+            result.data[i] = self.data[i] * scalar;
         }
+        result
     }
+}
 
 #[cfg(test)]
 pub mod tests {

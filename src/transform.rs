@@ -43,21 +43,21 @@ impl SqMatrix<4> {
     }
     pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
-        mat[(0,1)] = xy;
-        mat[(0,2)] = xz;
-        mat[(1,0)] = yx;
-        mat[(1,2)] = yz;
-        mat[(2,0)] = zx;
-        mat[(2,1)] = zy;
+        mat[(0, 1)] = xy;
+        mat[(0, 2)] = xz;
+        mat[(1, 0)] = yx;
+        mat[(1, 2)] = yz;
+        mat[(2, 0)] = zx;
+        mat[(2, 1)] = zy;
         mat
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use std::f64::consts::PI;
-    use crate::vec4::Vec4;
     use crate::matrix::Matrix;
+    use crate::vec4::Vec4;
+    use std::f64::consts::PI;
 
     #[test]
     fn translate() {
@@ -157,5 +157,4 @@ pub mod tests {
         let p_result = &t * &p;
         assert_eq!(p_result, Vec4::point(5.0, 5.0, 7.0));
     }
-
 }
