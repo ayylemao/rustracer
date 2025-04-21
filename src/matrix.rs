@@ -1,7 +1,7 @@
 use crate::math::ApproxEq;
 use crate::vec4::Vec4;
 use std::fmt;
-use std::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Index, IndexMut, Mul};
 
 pub type SqMatrix<const N: usize> = Matrix<N, N>;
 
@@ -106,7 +106,7 @@ impl Matrix<3, 3> {
 
 impl Matrix<2, 2> {
     pub fn det(&self) -> f64 {
-        self[(0,0)]*self[(1,1)] - self[(0,1)]*self[(1,0)]
+        self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)]
     }
 }
 
@@ -360,16 +360,9 @@ pub mod tests {
 
     #[test]
     fn transpose() {
-        let val = [
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0]
-        ];
+        let val = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
 
-        let t_val = [
-            [1.0, 4.0],
-            [2.0, 5.0],
-            [3.0, 6.0]
-        ];
+        let t_val = [[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]];
         let mat = Matrix::from_array(val);
         let t = mat.transpose();
         let t_test = Matrix::from_array(t_val);
@@ -379,33 +372,21 @@ pub mod tests {
 
     #[test]
     fn submatrix() {
-        let val = [
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0],
-            [7.0, 8.0, 9.0]
-        ];
+        let val = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
         let mat = Matrix::from_array(val);
         let sub = mat.submatrix(1, 1);
         assert_eq!(Matrix::from_array([[1.0, 3.0], [7.0, 9.0]]), sub);
     }
     #[test]
     fn minor() {
-        let val = [
-            [3.0, 5.0, 0.0],
-            [2.0, -1.0, -7.0],
-            [6.0, -1.0, 5.0]
-        ];
+        let val = [[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]];
         let mat = Matrix::from_array(val);
         let det = mat.minor(1, 0);
         assert_eq!(det, 25.0);
     }
     #[test]
     fn cofactor() {
-        let val = [
-            [3.0, 5.0, 0.0],
-            [2.0, -1.0, -7.0],
-            [6.0, -1.0, 5.0]
-        ];
+        let val = [[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]];
         let mat = Matrix::from_array(val);
         let minor1 = mat.minor(0, 0);
         assert_eq!(minor1, -12.0);
@@ -415,7 +396,5 @@ pub mod tests {
         assert_eq!(minor2, 25.0);
         let cofactor2 = mat.cofactor(1, 0);
         assert_eq!(cofactor2, -25.0);
-
-
     }
 }

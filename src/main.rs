@@ -1,8 +1,4 @@
-use raytracer::{
-    canvas::{self, Canvas},
-    color::Color,
-    vec4::Vec4,
-};
+use raytracer::{canvas::Canvas, color::Color, vec4::Vec4};
 
 #[derive(Debug)]
 struct Projectile {
