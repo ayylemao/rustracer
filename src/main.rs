@@ -1,40 +1,27 @@
-use raytracer::{canvas::Canvas, color::Color, vec4::Vec4};
+use std::f64::consts::PI;
 
-#[derive(Debug)]
-struct Projectile {
-    pos: Vec4,
-    vel: Vec4,
-}
+use raytracer::{canvas::Canvas, color::Color, vec4::Vec4, matrix::Matrix};
 
-fn tick(grav: &Vec4, wind: &Vec4, proj: &mut Projectile) {
-    proj.pos = proj.pos + proj.vel;
-    proj.vel = proj.vel + *grav + *wind;
-}
 
 fn main() {
-    let mut p = Projectile {
-        pos: Vec4::point(0.0, 1.0, 0.0),
-        vel: Vec4::vector(5.0, 5.0, 0.0),
-    };
-    let grav = Vec4::vector(0.0, -0.1, 0.0);
-    let wind = Vec4::vector(-0.01, 0.0, 0.0);
+    let mut canvas = Canvas::new(100, 100);
+    let center = Vec4::point(50.0, 50.0, 0.0);
+    let radius = 40.0;
+    let base = Vec4::point(0.0, -radius, 0.0); // top of the circle
 
-    let mut positions: Vec<Vec4> = Vec::new();
-    loop {
-        positions.push(p.pos.clone());
-        tick(&grav, &wind, &mut p);
-        if p.pos.y <= 0.0 {
-            break;
+    for i in 0..12 {
+        let angle = i as f64 * std::f64::consts::TAU / 12.0; // 2π / 12
+        let rot = Matrix::rotation_z(angle);
+        let rotated = &rot * &base;
+        let translated = &Matrix::translation(center.x, center.y, 0.0) * &rotated;
+
+        let x = translated.x.round() as usize;
+        let y = translated.y.round() as usize;
+
+        if x < canvas.width && y < canvas.height {
+            canvas[(x, y)] = Color::new(1.0, 0.0, 0.0);
         }
     }
-    let mut canvas = Canvas::new(100, 100);
 
-    for each in positions.iter() {
-        canvas[(each.x.round() as usize, each.y.round() as usize)] = Color::new(1.0, 0.0, 0.0);
-        canvas[(each.x.round() as usize + 1, each.y.round() as usize + 1)] =
-            Color::new(1.0, 0.0, 0.0);
-        canvas[(each.x.round() as usize, each.y.round() as usize + 1)] = Color::new(1.0, 0.0, 0.0);
-        canvas[(each.x.round() as usize + 1, each.y.round() as usize)] = Color::new(1.0, 0.0, 0.0);
-    }
     println!("{}", canvas.to_ppm());
 }

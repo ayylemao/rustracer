@@ -2,6 +2,7 @@ use crate::math::ApproxEq;
 use crate::vec4::Vec4;
 use std::fmt;
 use std::ops::{Index, IndexMut, Mul};
+use num_traits::ToPrimitive;
 
 pub type SqMatrix<const N: usize> = Matrix<N, N>;
 
@@ -83,7 +84,7 @@ impl Matrix<4, 4> {
         }
         det
     }
-    pub fn inverse(&self) -> Matrix<4,4,> {
+    pub fn inverse(&self) -> Matrix<4, 4> {
         let det = self.det();
         if det.approx_eq(&0.0) {
             panic!("Tried to invert non invertable Matrix!");
@@ -98,7 +99,6 @@ impl Matrix<4, 4> {
         }
         inverse
     }
-
 }
 
 impl Matrix<3, 3> {
@@ -191,7 +191,6 @@ impl<const ROWS: usize, const COLS: usize> PartialEq for Matrix<ROWS, COLS> {
     }
 }
 
-
 impl<'a, 'b, const N: usize> Mul<&'b Matrix<N, N>> for &'a Matrix<N, N> {
     type Output = Matrix<N, N>;
     fn mul(self, rhs: &'b Matrix<N, N>) -> Self::Output {
@@ -216,7 +215,7 @@ impl<const N: usize> Mul for Matrix<N, N> {
     }
 }
 
-impl<'a, 'b> Mul<&'b Vec4> for &'a Matrix<4,4> {
+impl<'a, 'b> Mul<&'b Vec4> for &'a Matrix<4, 4> {
     type Output = Vec4;
     fn mul(self, rhs: &'b Vec4) -> Self::Output {
         let components = [rhs.x, rhs.y, rhs.z, rhs.w];
@@ -231,6 +230,14 @@ impl<'a, 'b> Mul<&'b Vec4> for &'a Matrix<4,4> {
     }
 }
 
+impl<'b> Mul<&'b Vec4> for Matrix<4, 4> {
+    type Output = Vec4;
+
+    fn mul(self, rhs: &'b Vec4) -> Self::Output {
+        (&self) * rhs
+    }
+}
+
 impl Mul<Vec4> for Matrix<4, 4> {
     type Output = Vec4;
     fn mul(self, rhs: Vec4) -> Self::Output {
@@ -238,10 +245,23 @@ impl Mul<Vec4> for Matrix<4, 4> {
     }
 }
 
+impl<const ROWS: usize, const COLS: usize, I> Mul<I> for Matrix<ROWS, COLS>
+where
+    I: ToPrimitive + Copy,
+    {
+        type Output = Matrix<ROWS, COLS>;
+        fn mul(self, rhs: I) -> Self::Output {
+            let scalar = rhs.to_f64().expect("Failed to convert to f64");
+            let mut result = Matrix::<ROWS, COLS>::new();
+            for i in 0..self.data.len() {
+                result.data[i] = self.data[i] * scalar;
+            }
+            result
+        }
+    }
+
 #[cfg(test)]
 pub mod tests {
-    use std::ffi::c_char;
-
     use super::*;
 
     #[test]
@@ -468,40 +488,41 @@ pub mod tests {
     #[test]
     fn inverse() {
         let a_values: [[f64; 4]; 4] = [
-            [ 8.0,  -5.0,  9.0,  2.0],
-            [ 7.0,   5.0,  6.0,  1.0],
-            [-6.0,   0.0,  9.0,  6.0],
-            [-3.0,   0.0, -9.0, -4.0],
+            [8.0, -5.0, 9.0, 2.0],
+            [7.0, 5.0, 6.0, 1.0],
+            [-6.0, 0.0, 9.0, 6.0],
+            [-3.0, 0.0, -9.0, -4.0],
         ];
         let m = Matrix::from_array(a_values);
         let a_inverse_values: [[f64; 4]; 4] = [
             [-0.15385, -0.15385, -0.28205, -0.53846],
-            [-0.07692,  0.12308,  0.02564,  0.03077],
-            [ 0.35897,  0.35897,  0.43590,  0.92308],
+            [-0.07692, 0.12308, 0.02564, 0.03077],
+            [0.35897, 0.35897, 0.43590, 0.92308],
             [-0.69231, -0.69231, -0.76923, -1.92308],
         ];
         let m_inverse = Matrix::from_array(a_inverse_values);
         assert!(m.inverse() == m_inverse);
 
         let a_values: [[f64; 4]; 4] = [
-            [  3.0,  -9.0,  7.0,  3.0],
-            [  3.0,  -8.0,  2.0, -9.0],
-            [ -4.0,   4.0,  4.0,  1.0],
-            [ -6.0,   5.0, -1.0,  1.0],
+            [3.0, -9.0, 7.0, 3.0],
+            [3.0, -8.0, 2.0, -9.0],
+            [-4.0, 4.0, 4.0, 1.0],
+            [-6.0, 5.0, -1.0, 1.0],
         ];
         let a = Matrix::from_array(a_values);
         let b_values: [[f64; 4]; 4] = [
-            [ 8.0,  2.0,  2.0,  2.0],
-            [ 3.0, -1.0,  7.0,  0.0],
-            [ 7.0,  0.0,  5.0,  4.0],
-            [ 6.0, -2.0,  0.0,  5.0],
+            [8.0, 2.0, 2.0, 2.0],
+            [3.0, -1.0, 7.0, 0.0],
+            [7.0, 0.0, 5.0, 4.0],
+            [6.0, -2.0, 0.0, 5.0],
         ];
         let b = Matrix::from_array(b_values);
 
         let c = &a * &b;
         assert!(&c * &b.inverse() == a);
 
-        let eye = Matrix::<4,4>::eye();
+        let eye = Matrix::<4, 4>::eye();
         assert!(eye == eye.inverse());
+        assert!(&b * &b.inverse() == eye);
     }
 }
