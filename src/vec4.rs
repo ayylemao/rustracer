@@ -150,6 +150,14 @@ impl Vec4 {
     pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
         Self { x, y, z, w: w }
     }
+    pub fn from_array(array: [f64; 4]) -> Self {
+        Self {
+            x: array[0],
+            y: array[1],
+            z: array[2],
+            w: array[3],
+        }
+    }
     pub fn point(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z, w: 1.0 }
     }

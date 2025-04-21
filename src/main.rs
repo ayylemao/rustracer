@@ -1,9 +1,13 @@
-use raytracer::{canvas::{self, Canvas}, color::Color, vec4::Vec4};
+use raytracer::{
+    canvas::{self, Canvas},
+    color::Color,
+    vec4::Vec4,
+};
 
 #[derive(Debug)]
 struct Projectile {
     pos: Vec4,
-    vel: Vec4
+    vel: Vec4,
 }
 
 fn tick(grav: &Vec4, wind: &Vec4, proj: &mut Projectile) {
@@ -14,7 +18,7 @@ fn tick(grav: &Vec4, wind: &Vec4, proj: &mut Projectile) {
 fn main() {
     let mut p = Projectile {
         pos: Vec4::point(0.0, 1.0, 0.0),
-        vel: Vec4::vector(5.0, 5.0, 0.0)
+        vel: Vec4::vector(5.0, 5.0, 0.0),
     };
     let grav = Vec4::vector(0.0, -0.1, 0.0);
     let wind = Vec4::vector(-0.01, 0.0, 0.0);
@@ -31,7 +35,8 @@ fn main() {
 
     for each in positions.iter() {
         canvas[(each.x.round() as usize, each.y.round() as usize)] = Color::new(1.0, 0.0, 0.0);
-        canvas[(each.x.round() as usize + 1, each.y.round() as usize + 1)] = Color::new(1.0, 0.0, 0.0);
+        canvas[(each.x.round() as usize + 1, each.y.round() as usize + 1)] =
+            Color::new(1.0, 0.0, 0.0);
         canvas[(each.x.round() as usize, each.y.round() as usize + 1)] = Color::new(1.0, 0.0, 0.0);
         canvas[(each.x.round() as usize + 1, each.y.round() as usize)] = Color::new(1.0, 0.0, 0.0);
     }

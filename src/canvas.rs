@@ -68,9 +68,21 @@ pub mod tests {
     fn ppm_pixel_data_lines_4_to_6() {
         let mut c = Canvas::new(5, 3);
 
-        let c1 = Color { r: 1.5, g: 0.0, b: 0.0 };
-        let c2 = Color { r: 0.0, g: 0.5, b: 0.0 };
-        let c3 = Color { r: -0.5, g: 0.0, b: 1.0 };
+        let c1 = Color {
+            r: 1.5,
+            g: 0.0,
+            b: 0.0,
+        };
+        let c2 = Color {
+            r: 0.0,
+            g: 0.5,
+            b: 0.0,
+        };
+        let c3 = Color {
+            r: -0.5,
+            g: 0.0,
+            b: 1.0,
+        };
 
         c[(0, 0)] = c1;
         c[(2, 1)] = c2;
@@ -83,5 +95,4 @@ pub mod tests {
         assert_eq!(lines[4], "0 0 0 0 0 0 0 128 0 0 0 0 0 0 0");
         assert_eq!(lines[5], "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255");
     }
-
 }
