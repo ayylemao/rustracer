@@ -1,7 +1,4 @@
-use crate::{
-    matrix::{Matrix, SqMatrix},
-    vec4::Vec4,
-};
+use crate::{matrix::SqMatrix, vec4::Vec4};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
@@ -22,6 +19,9 @@ impl Ray {
             direction: Vec4::vector(dx, dy, dz),
         }
     }
+    pub fn from_vec4(origin: Vec4, direction: Vec4) -> Self {
+        Ray { origin, direction }
+    }
     pub fn position(&self, t: f64) -> Vec4 {
         self.origin + self.direction * t
     }
@@ -38,6 +38,7 @@ impl Ray {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use crate::matrix::Matrix;
 
     #[test]
     fn compute_point_distance() {
@@ -54,6 +55,7 @@ pub mod tests {
             r2.origin == Vec4::point(4.0, 6.0, 8.0) && r2.direction == Vec4::vector(0.0, 1.0, 0.0)
         );
     }
+    #[test]
     fn scale_ray() {
         let r = Ray::new(1.0, 2.0, 3.0, 0.0, 1.0, 0.0);
         let m = Matrix::scaling(2.0, 3.0, 4.0);

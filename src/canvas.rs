@@ -34,6 +34,9 @@ impl Canvas {
         ppm_string.push('\n');
         ppm_string
     }
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) {
+        self[(x, y)] = color;
+    }
 }
 
 impl Index<(usize, usize)> for Canvas {

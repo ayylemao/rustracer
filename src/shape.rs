@@ -25,14 +25,15 @@ impl Sphere {
             transform: Matrix::<4, 4>::eye(),
         }
     }
-    pub fn set_transformation(&mut self, mat: &Matrix::<4,4>) {
-        self.transform = mat.clone();
+    pub fn set_transformation(&mut self, mat: Matrix<4, 4>) {
+        self.transform = mat;
     }
 }
 
 impl Shape for Sphere {
-    fn intersetct(&self, ray: &Ray) -> Vec<Intersection> {
+    fn intersetct(&self, ray_in: &Ray) -> Vec<Intersection> {
         let mut intersection: Vec<Intersection> = Vec::new();
+        let ray = ray_in.transform(&self.transform.inverse());
         let sphere_to_ray = ray.origin - Vec4::point(0.0, 0.0, 0.0);
         let a = ray.direction.dot(&ray.direction);
         let b = ray.direction.dot(&sphere_to_ray) * 2.0;
@@ -69,9 +70,21 @@ pub mod tests {
         assert!(xs.len() == 2);
         assert!(xs[0].id == s1.id && xs[1].id == s1.id)
     }
+    #[test]
     fn intersect_with_trans() {
-        let s1 = Sphere::new();
-        
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
+        let mut s1 = Sphere::new();
+        let trans = Matrix::scaling(2.0, 2.0, 2.0);
+        s1.set_transformation(trans);
+        let xs = s1.intersetct(&ray);
+        assert!(xs.len() == 2);
+        assert!(xs[0].t == 3.0 && xs[1].t == 7.0);
+
+        let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
+        let mut s1 = Sphere::new();
+        let trans = Matrix::translation(5.0, 0.0, 0.0);
+        s1.set_transformation(trans);
+        let xs = s1.intersetct(&ray);
+        assert!(xs.len() == 0);
     }
 }

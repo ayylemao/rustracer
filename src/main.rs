@@ -1,24 +1,45 @@
+use raytracer::{
+    canvas::Canvas,
+    color::Color,
+    matrix::Matrix,
+    ray::Ray,
+    shape::{Shape, Sphere},
+    vec4::Vec4,
+};
 use std::io::{BufWriter, Write};
 
-use raytracer::{canvas::Canvas, color::Color, matrix::Matrix, vec4::Vec4};
-
+const WIDTH: usize = 100;
+const HEIGHT: usize = 100;
 fn main() {
-    let mut canvas = Canvas::new(100, 100);
-    let center = Vec4::point(50.0, 50.0, 0.0);
-    let radius = 40.0;
-    let base = Vec4::point(0.0, -radius, 0.0); // top of the circle
+    let mut canvas = Canvas::new(WIDTH, HEIGHT);
 
-    for i in 0..12 {
-        let angle = i as f64 * std::f64::consts::TAU / 12.0; // 2π / 12
-        let rot = Matrix::rotation_z(angle);
-        let rotated = &rot * &base;
-        let translated = &Matrix::translation(center.x, center.y, 0.0) * &rotated;
+    let mut sphere = Sphere::new();
 
-        let x = translated.x.round() as usize;
-        let y = translated.y.round() as usize;
+    let ray_origin = Vec4::point(0.0, 0.0, -5.0);
+    let wall_z = 10.0;
+    let wall_size = 7.0;
+    let pixel_size = wall_size / WIDTH as f64;
+    let half = wall_size / 2.0;
+    let color = Color::new(1.0, 0.0, 0.0);
+    let transform = Matrix::translation(0.5, -0.25, 1.0)
+        * Matrix::rotation_y(std::f64::consts::PI / 4.0)
+        * Matrix::rotation_z(std::f64::consts::PI / 8.0)
+        * Matrix::shearing(0.2, 0.05, 0.1, 0.6, 0.01, 0.2)
+        * Matrix::scaling(0.6, 1.2, 0.6);
 
-        if x < canvas.width && y < canvas.height {
-            canvas[(x, y)] = Color::new(1.0, 1.0, 1.0);
+    sphere.set_transformation(transform);
+
+    for y in 0..HEIGHT {
+        let world_y = half - pixel_size * y as f64;
+        for x in 0..WIDTH {
+            let world_x = -half + pixel_size * x as f64;
+            let position = Vec4::point(world_x, world_y, wall_z);
+            let ray = Ray::from_vec4(position, (position - ray_origin).norm());
+            let xs = sphere.intersetct(&ray);
+
+            if !xs.is_empty() {
+                canvas.set_pixel(x, y, color);
+            }
         }
     }
 
