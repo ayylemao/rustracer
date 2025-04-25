@@ -1,5 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
-
+use std::fmt::Debug;
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
@@ -8,9 +8,10 @@ use crate::vec4::Vec4;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
-pub trait Shape {
-    fn intersetct(&self, ray: &Ray) -> Vec<Intersection>;
+pub trait Shape: Debug {
+    fn intersetct<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>>;
     fn normal_at(&self, position: Vec4) -> Vec4;
+    fn material(&self) -> Material;
 }
 
 #[derive(Debug, Clone)]
@@ -46,7 +47,7 @@ impl Sphere {
 }
 
 impl Shape for Sphere {
-    fn intersetct(&self, ray_in: &Ray) -> Vec<Intersection> {
+    fn intersetct<'a>(&'a self, ray_in: &Ray) -> Vec<Intersection<'a>> {
         let mut intersection: Vec<Intersection> = Vec::new();
         let ray = ray_in.transform(&self.transform.inverse());
         let sphere_to_ray = ray.origin - Vec4::point(0.0, 0.0, 0.0);
@@ -60,8 +61,8 @@ impl Shape for Sphere {
         }
         let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
         let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-        intersection.push(Intersection::new(t1, self.id));
-        intersection.push(Intersection::new(t2, self.id));
+        intersection.push(Intersection::new(t1, self.id, self));
+        intersection.push(Intersection::new(t2, self.id, self));
         intersection
     }
 
@@ -71,6 +72,10 @@ impl Shape for Sphere {
         let mut world_normal = self.transform.inverse().transpose() * object_normal;
         world_normal.w = 0.0;
         world_normal.norm()
+    }
+
+    fn material(&self) -> Material {
+        self.material
     }
 }
 
