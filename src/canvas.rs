@@ -13,7 +13,7 @@ impl Canvas {
         Canvas {
             width: width,
             height: height,
-            pixels: vec![Color::default(); width * height],
+            pixels: vec![Color::black(); width * height],
         }
     }
     pub fn to_ppm(self) -> String {

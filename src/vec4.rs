@@ -20,6 +20,8 @@ impl PartialEq for Vec4 {
     }
 }
 
+impl Eq for Vec4 {}
+
 impl Add for Vec4 {
     type Output = Vec4;
     fn add(self, rhs: Self) -> Self::Output {
@@ -192,6 +194,9 @@ impl Vec4 {
             w: 0.0,
         }
     }
+    pub fn reflect(self, normal: &Vec4) -> Vec4 {
+        self - *normal * 2.0 * self.dot(normal)
+    }
 }
 
 #[cfg(test)]
@@ -293,5 +298,14 @@ mod tests {
         let t2 = Vec4::vector(2.0, 3.0, 4.0);
         assert_eq!(t1.cross(&t2), Vec4::vector(-1.0, 2.0, -1.0));
         assert_eq!(t2.cross(&t1), Vec4::vector(1.0, -2.0, 1.0));
+    }
+    #[test]
+    fn reflect() {
+        let v = Vec4::vector(1.0, -1.0, 0.0);
+        let n = Vec4::vector(0.0, 1.0, 0.0);
+        assert_eq!(v.reflect(&n), Vec4::vector(1.0, 1.0, 0.0));
+        let v = Vec4::vector(0.0, -1.0, 0.0);
+        let n = Vec4::vector(2.0f64.sqrt() / 2.0, 2.0f64.sqrt() / 2.0, 0.0);
+        assert_eq!(v.reflect(&n), Vec4::vector(1.0, 0.0, 0.0));
     }
 }

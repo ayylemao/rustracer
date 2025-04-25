@@ -1,3 +1,5 @@
+use std::ops::Neg;
+
 use crate::{matrix::SqMatrix, vec4::Vec4};
 
 #[derive(Debug, Clone, Copy)]
@@ -32,6 +34,15 @@ impl Ray {
             origin: new_origin,
             direction: new_dir,
         }
+    }
+    pub fn neg(&self) -> Ray {
+        Self {
+            origin: self.origin.clone(),
+            direction: self.direction.neg(),
+        }
+    }
+    pub fn neg_mut(&mut self) {
+        self.direction = self.direction.neg();
     }
 }
 

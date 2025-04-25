@@ -1,33 +1,35 @@
 use raytracer::{
-    canvas::Canvas,
-    color::Color,
-    matrix::Matrix,
-    ray::Ray,
-    shape::{Shape, Sphere},
-    vec4::Vec4,
+    canvas::Canvas, color::Color, light::PointLight, material::Material, matrix::Matrix, ray::Ray, shape::{Shape, Sphere}, vec4::Vec4
 };
 use std::io::{BufWriter, Write};
 
-const WIDTH: usize = 100;
-const HEIGHT: usize = 100;
+const WIDTH: usize = 1600;
+const HEIGHT: usize = 1600;
 fn main() {
     let mut canvas = Canvas::new(WIDTH, HEIGHT);
 
     let mut sphere = Sphere::new();
-
+    
     let ray_origin = Vec4::point(0.0, 0.0, -5.0);
-    let wall_z = 10.0;
+    let wall_z = -10.0;
     let wall_size = 7.0;
     let pixel_size = wall_size / WIDTH as f64;
     let half = wall_size / 2.0;
     let color = Color::new(1.0, 0.0, 0.0);
     let transform = Matrix::translation(0.5, -0.25, 1.0)
-        * Matrix::rotation_y(std::f64::consts::PI / 4.0)
+        * Matrix::rotation_y(std::f64::consts::PI / 2.0)
         * Matrix::rotation_z(std::f64::consts::PI / 8.0)
-        * Matrix::shearing(0.2, 0.05, 0.1, 0.6, 0.01, 0.2)
+        * Matrix::shearing(1.23, 0.05, 0.1, 0.6, 0.01, 0.2)
         * Matrix::scaling(0.6, 1.2, 0.6);
-
     sphere.set_transformation(transform);
+
+    let mut material = Material::default();
+    material.set_color(Color::new(1.0, 0.2, 1.0));
+    sphere.set_material(material);
+
+    let light_position = Vec4::point(-10.0, 10.0, -10.0);
+    let light_color = Color::white();
+    let light = PointLight::new(light_position, light_color);
 
     for y in 0..HEIGHT {
         let world_y = half - pixel_size * y as f64;
@@ -36,7 +38,10 @@ fn main() {
             let position = Vec4::point(world_x, world_y, wall_z);
             let ray = Ray::from_vec4(position, (position - ray_origin).norm());
             let xs = sphere.intersetct(&ray);
-
+            //if !xs.is_empty() {
+            //    let point = ray.position(xs[0].t);
+            //    let normal = xs[0].id
+            //}
             if !xs.is_empty() {
                 canvas.set_pixel(x, y, color);
             }
