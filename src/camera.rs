@@ -7,12 +7,12 @@ pub struct Camera {
     pub transform: Matrix<4, 4>,
     pub pixel_size: f64,
     pub half_width: f64,
-    pub half_height: f64
+    pub half_height: f64,
 }
 
 impl Camera {
     pub fn new(hsize: usize, vsize: usize, fov: f64) -> Self {
-        let half_view = (fov/2.0).tan();
+        let half_view = (fov / 2.0).tan();
         let aspect = hsize as f64 / vsize as f64;
         let (half_width, half_height) = if aspect >= 1.0 {
             (half_view, half_view / aspect)
@@ -29,16 +29,16 @@ impl Camera {
             transform: Matrix::eye(),
             pixel_size,
             half_width,
-            half_height
+            half_height,
         }
     }
     pub fn set_view(&mut self, from: Vec4, to: Vec4, up: Vec4) {
         self.transform = Camera::view_transform(from, to, up);
     }
-    pub fn set_view_from_matrix(&mut self, mat: Matrix<4,4>) {
+    pub fn set_view_from_matrix(&mut self, mat: Matrix<4, 4>) {
         self.transform = mat;
     }
-    pub fn view_transform(from: Vec4, to: Vec4, up: Vec4) -> Matrix<4,4> {
+    pub fn view_transform(from: Vec4, to: Vec4, up: Vec4) -> Matrix<4, 4> {
         let forward = (to - from).norm();
         let upn = up.norm();
         let left = forward.cross(&upn);
@@ -63,10 +63,10 @@ impl Camera {
         let pixel = self.transform.inverse() * Vec4::point(world_x, world_y, -1.0);
         let origin = self.transform.inverse() * Vec4::point(0.0, 0.0, 0.0);
         let direction = (pixel - origin).norm();
-        Ray { origin, direction}
+        Ray { origin, direction }
     }
     pub fn render(&self, world: &World) -> Canvas {
-        let mut image = Canvas::new(self.hsize, self.hsize);
+        let mut image = Canvas::new(self.hsize, self.vsize);
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
@@ -113,31 +113,31 @@ pub mod tests {
     }
     #[test]
     fn center_canvas() {
-        let c = Camera::new(201, 101, PI/2.0);
+        let c = Camera::new(201, 101, PI / 2.0);
         let r = c.ray_for_pixel(100, 50);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
         assert_eq!(r.direction, Vec4::vector(0.0, 0.0, -1.0));
     }
     #[test]
     fn corner_canvas() {
-        let c = Camera::new(201, 101, PI/2.0);
+        let c = Camera::new(201, 101, PI / 2.0);
         let r = c.ray_for_pixel(0, 0);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
-        assert_eq!(r.direction, Vec4::vector(0.66519,0.33259,-0.66851));
+        assert_eq!(r.direction, Vec4::vector(0.66519, 0.33259, -0.66851));
     }
     #[test]
     fn corner_canvas_transform() {
-        let mut c = Camera::new(201, 101, PI/2.0);
-        c.set_view_from_matrix(Matrix::rotation_y(PI/4.0)*Matrix::translation(0.0, -2.0, 5.0)); 
+        let mut c = Camera::new(201, 101, PI / 2.0);
+        c.set_view_from_matrix(Matrix::rotation_y(PI / 4.0) * Matrix::translation(0.0, -2.0, 5.0));
         let r = c.ray_for_pixel(100, 50);
-        
+
         assert_eq!(r.origin, Vec4::point(0.0, 2.0, -5.0));
-        assert_eq!(r.direction, Vec4::vector(SQRT_2/2.0, 0.0, -SQRT_2/2.0));
+        assert_eq!(r.direction, Vec4::vector(SQRT_2 / 2.0, 0.0, -SQRT_2 / 2.0));
     }
     #[test]
     fn render_func() {
         let w = World::default();
-        let mut c = Camera::new(11, 11, PI/2.0);
+        let mut c = Camera::new(11, 11, PI / 2.0);
         let from = Vec4::point(0.0, 0.0, -5.0);
         let to = Vec4::point(0.0, 0.0, 0.0);
         let up = Vec4::vector(0.0, 1.0, 0.0);

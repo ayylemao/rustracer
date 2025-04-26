@@ -16,6 +16,12 @@ pub struct World {
 }
 
 impl World {
+    pub fn new(light: PointLight) -> Self {
+        World {
+            light,
+            shapes: Vec::new(),
+        }
+    }
     pub fn default() -> Self {
         let mut world = Self {
             light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),

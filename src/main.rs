@@ -1,65 +1,81 @@
 use raytracer::{
-    canvas::Canvas,
-    color::Color,
-    intersection::Intersection,
-    light::PointLight,
-    material::Material,
-    matrix::Matrix,
-    ray::Ray,
-    shape::{Shape, Sphere},
-    vec4::Vec4,
+    camera::Camera, color::Color, light::PointLight, matrix::Matrix, shape::Sphere, vec4::Vec4,
+    world::World,
 };
-use std::io::{BufWriter, Write};
+use std::{
+    f64::consts::PI,
+    io::{BufWriter, Write},
+};
 
-const WIDTH: usize = 1600;
-const HEIGHT: usize = 1600;
+const WIDTH: usize = 1000;
+const HEIGHT: usize = 500;
 fn main() {
-    let mut canvas = Canvas::new(WIDTH, HEIGHT);
+    // shapes
+    let mut floor = Sphere::new();
+    floor.set_transformation(Matrix::scaling(10.0, 0.01, 10.0));
+    floor.material.set_color(Color::new(1.0, 0.9, 0.9));
+    floor.material.specular = 0.0;
 
-    let mut sphere = Sphere::new();
+    let mut left_wall = Sphere::new();
+    left_wall.set_transformation(
+        Matrix::translation(0.0, 0.0, 5.0)
+            * Matrix::rotation_y(-PI / 4.0)
+            * Matrix::rotation_x(PI / 2.0)
+            * Matrix::scaling(10.0, 0.01, 10.0),
+    );
+    left_wall.set_material(floor.material.clone());
 
-    let ray_origin = Vec4::point(0.0, 0.0, -5.0);
-    let wall_z = 10.0;
-    let wall_size = 7.0;
-    let pixel_size = wall_size / WIDTH as f64;
-    let half = wall_size / 2.0;
+    let mut right_wall = Sphere::new();
+    right_wall.set_transformation(
+        Matrix::translation(0.0, 0.0, 5.0)
+            * Matrix::rotation_y(PI / 4.0)
+            * Matrix::rotation_x(PI / 2.0)
+            * Matrix::scaling(10.0, 0.01, 10.0),
+    );
+    right_wall.set_material(floor.material.clone());
 
-    let transform = Matrix::translation(0.0, 0.0, 2.0);
-    //* Matrix::rotation_y(std::f64::consts::PI / 2.0)
-    //* Matrix::rotation_z(std::f64::consts::PI / 8.0)
-    //* Matrix::shearing(1.23, 0.05, 0.1, 0.6, 0.01, 0.2)
-    //* Matrix::scaling(0.6, 1.2, 0.6);
-    sphere.set_transformation(transform);
+    let mut middle = Sphere::new();
+    middle.set_transformation(Matrix::translation(-0.5, 1.0, 0.5));
+    middle.material.set_color(Color::new(0.1, 1.0, 0.5));
+    middle.material.diffuse = 0.7;
+    middle.material.specular = 0.3;
 
-    let mut material = Material::default();
-    material.set_color(Color::new(1.0, 0.2, 1.0));
-    sphere.set_material(material);
+    let mut right = Sphere::new();
+    right.set_transformation(Matrix::translation(1.5, 0.5, -0.5) * Matrix::scaling(0.5, 0.5, 0.5));
+    right.material.set_color(Color::new(0.5, 1.0, 0.1));
+    right.material.diffuse = 0.7;
+    right.material.specular = 0.3;
 
-    let light_position = Vec4::point(-30.0, 10.0, -10.0);
-    let light_color = Color::white();
-    let light = PointLight::new(light_position, light_color);
+    let mut left = Sphere::new();
+    left.set_transformation(
+        Matrix::translation(-1.5, 0.33, -0.75) * Matrix::scaling(0.33, 0.33, 0.33),
+    );
+    left.material.set_color(Color::new(1.0, 0.8, 0.1));
+    left.material.diffuse = 0.7;
+    left.material.specular = 0.3;
 
-    for y in 0..HEIGHT {
-        let world_y = half - pixel_size * y as f64;
-        for x in 0..WIDTH {
-            let world_x = -half + pixel_size * x as f64;
-            let position = Vec4::point(world_x, world_y, wall_z);
-            let ray = Ray::from_vec4(ray_origin, (position - ray_origin).norm());
-            let xs = sphere.intersetct(&ray);
-            if let Some(hit) = Intersection::hit(&xs) {
-                let point = ray.position(hit.t);
-                let normal = hit.object.normal_at(point);
-                let eye = -ray.direction;
-                let color = hit
-                    .object
-                    .material()
-                    .lighting(&light, &point, &eye, &normal);
-                canvas.set_pixel(x, y, color);
-            }
-        }
-    }
+    // World Setup
+    let mut world = World::new(PointLight::new(
+        Vec4::point(-10.0, 10.0, -10.0),
+        Color::white(),
+    ));
+    world.add_shape(Box::new(floor));
+    world.add_shape(Box::new(left_wall));
+    world.add_shape(Box::new(right_wall));
+    world.add_shape(Box::new(middle));
+    world.add_shape(Box::new(left));
+    world.add_shape(Box::new(right));
+
+    let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0);
+    camera.set_view(
+        Vec4::point(0.0, 1.5, -5.0),
+        Vec4::point(0.0, 1.0, 0.0),
+        Vec4::vector(0.0, 1.0, 0.0),
+    );
+
+    let image = camera.render(&world);
 
     let file = std::fs::File::create("test.ppm").unwrap();
     let mut buff = BufWriter::new(file);
-    buff.write(canvas.to_ppm().as_bytes()).unwrap();
+    buff.write(image.to_ppm().as_bytes()).unwrap();
 }
