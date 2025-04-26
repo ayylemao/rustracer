@@ -39,7 +39,7 @@ pub struct Intersection<'a> {
 
 impl Intersection<'_> {
     pub fn new(t: f64, object: &dyn Shape) -> Intersection {
-        Intersection {t, object }
+        Intersection { t, object }
     }
 
     pub fn hit<'a>(int_list: &'a [Intersection<'a>]) -> Option<&'a Intersection<'a>> {
@@ -117,13 +117,13 @@ pub mod tests {
     pub fn hit_when_intersection_outside_inside() {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
-        let i = Intersection::new(4.0,  &s);
+        let i = Intersection::new(4.0, &s);
         let comps = i.prepare_computations(&r);
         assert_eq!(comps.inside, false);
 
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
-        let i = Intersection::new(1.0,  &s);
+        let i = Intersection::new(1.0, &s);
         let comps = i.prepare_computations(&r);
         assert_eq!(comps.point, Vec4::point(0.0, 0.0, 1.0));
         assert_eq!(comps.eyev, Vec4::vector(0.0, 0.0, -1.0));

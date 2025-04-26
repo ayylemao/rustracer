@@ -55,7 +55,10 @@ impl World {
         xs
     }
     pub fn shade_hit(&self, comps: Computations) -> Color {
-        comps.object().material().lighting(&self.light, &comps.point, &comps.eyev, &comps.normalv)
+        comps
+            .object()
+            .material()
+            .lighting(&self.light, &comps.point, &comps.eyev, &comps.normalv)
     }
     pub fn color_at(&self, ray: &Ray) -> Color {
         let xs = self.intersect(ray);
@@ -95,12 +98,12 @@ pub mod tests {
     fn shading_an_intersection() {
         let w = World::default();
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
-        
+
         let shape = &*w.shapes[0]; // first object
         let i = Intersection::new(4.0, shape);
         let comps = i.prepare_computations(&r);
         let c = w.shade_hit(comps);
-        
+
         let expected = Color::new(0.38066, 0.47583, 0.2855);
         assert_eq!(c, expected);
     }
@@ -115,7 +118,7 @@ pub mod tests {
         let i = Intersection::new(0.5, shape);
         let comps = i.prepare_computations(&r);
         let c = w.shade_hit(comps);
-    
+
         let expected = Color::new(0.90498, 0.90498, 0.90498);
         assert_eq!(c, expected);
     }
