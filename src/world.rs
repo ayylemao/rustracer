@@ -5,8 +5,8 @@ use crate::{
     material::Material,
     matrix::Matrix,
     ray::Ray,
-    shape::{Shape, Sphere},
-    vec4::Vec4,
+    shapes::Shape,
+    vec4::Vec4, Sphere,
 };
 
 #[derive(Debug)]
@@ -55,7 +55,7 @@ impl World {
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let mut xs: Vec<Intersection> = Vec::new();
         for shape in &self.shapes {
-            xs.extend(shape.intersetct(&ray));
+            xs.extend(shape.intersect(&ray));
         }
         xs.sort();
         xs

@@ -1,6 +1,6 @@
 use crate::math::{ApproxEq, EPSILON};
 use crate::ray::Ray;
-use crate::shape::Shape;
+use crate::shapes::Shape;
 use crate::vec4::Vec4;
 use std::cmp::Ordering;
 
@@ -83,10 +83,10 @@ impl Ord for Intersection<'_> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::shape::Sphere;
+    use crate::Sphere;
 
     use super::*;
-
+    
     #[test]
     fn get_hit() {
         let sphere = Sphere::new();

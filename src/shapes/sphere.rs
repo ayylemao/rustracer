@@ -1,18 +1,12 @@
+use super::Shape;
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
 use crate::vec4::Vec4;
-use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
-
-pub trait Shape: Debug {
-    fn intersetct<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>>;
-    fn normal_at(&self, position: Vec4) -> Vec4;
-    fn material(&self) -> Material;
-}
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
@@ -38,16 +32,10 @@ impl Sphere {
             material: Material::default(),
         }
     }
-    pub fn set_transformation(&mut self, mat: Matrix<4, 4>) {
-        self.transform = mat;
-    }
-    pub fn set_material(&mut self, material: Material) {
-        self.material = material;
-    }
 }
 
 impl Shape for Sphere {
-    fn intersetct<'a>(&'a self, ray_in: &Ray) -> Vec<Intersection<'a>> {
+    fn intersect<'a>(&'a self, ray_in: &Ray) -> Vec<Intersection<'a>> {
         let mut intersection: Vec<Intersection> = Vec::new();
         let ray = ray_in.transform(&self.transform.inverse());
         let sphere_to_ray = ray.origin - Vec4::point(0.0, 0.0, 0.0);
@@ -66,18 +54,27 @@ impl Shape for Sphere {
         intersection
     }
 
-    fn normal_at(&self, world_point: Vec4) -> Vec4 {
-        let object_point = self.transform.inverse() * world_point;
-        let object_normal = object_point - Vec4::point(0.0, 0.0, 0.0);
-        let mut world_normal = self.transform.inverse().transpose() * object_normal;
-        world_normal.w = 0.0;
-        world_normal.norm()
+    fn local_normal_at(&self, local_point: Vec4) -> Vec4 {
+        local_point - Vec4::point(0.0, 0.0, 0.0)
+    }
+
+    fn transform(&self) -> SqMatrix<4> {
+        self.transform.clone()
     }
 
     fn material(&self) -> Material {
         self.material
     }
+
+    fn set_transformation(&mut self, mat: Matrix<4, 4>) {
+        self.transform = mat;
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
 }
+
 
 #[cfg(test)]
 pub mod tests {
@@ -96,7 +93,7 @@ pub mod tests {
     fn intersetct() {
         let s1 = Sphere::new();
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
-        let xs = s1.intersetct(&ray);
+        let xs = s1.intersect(&ray);
         assert!(xs.len() == 2);
         //assert!(*xs[0].object == s1.id && xs[1].id == s1.id)
     }
@@ -106,7 +103,7 @@ pub mod tests {
         let mut s1 = Sphere::new();
         let trans = Matrix::scaling(2.0, 2.0, 2.0);
         s1.set_transformation(trans);
-        let xs = s1.intersetct(&ray);
+        let xs = s1.intersect(&ray);
         assert!(xs.len() == 2);
         assert!(xs[0].t == 3.0 && xs[1].t == 7.0);
 
@@ -114,7 +111,7 @@ pub mod tests {
         let mut s1 = Sphere::new();
         let trans = Matrix::translation(5.0, 0.0, 0.0);
         s1.set_transformation(trans);
-        let xs = s1.intersetct(&ray);
+        let xs = s1.intersect(&ray);
         assert!(xs.len() == 0);
     }
     #[test]
