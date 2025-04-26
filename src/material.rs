@@ -14,7 +14,7 @@ pub struct Material {
 impl Material {
     pub fn default() -> Self {
         Self {
-            color: Color::default(),
+            color: Color::white(),
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
@@ -59,7 +59,6 @@ impl Material {
     }
 }
 
-
 #[cfg(test)]
 pub mod tests {
     use super::*;
@@ -72,9 +71,9 @@ pub mod tests {
         let eyev = Vec4::vector(0.0, SQRT_2 / 2.0, -SQRT_2 / 2.0);
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-    
+
         let result = m.lighting(&light, &position, &eyev, &normalv);
-    
+
         let expected = Color::new(1.0, 1.0, 1.0);
         assert_eq!(result, expected);
     }
@@ -95,15 +94,15 @@ pub mod tests {
     #[test]
     pub fn lighting_with_eye_in_reflection_path() {
         use std::f64::consts::SQRT_2;
-    
+
         let m = Material::default();
         let position = Vec4::point(0.0, 0.0, 0.0);
         let eyev = Vec4::vector(0.0, -SQRT_2 / 2.0, -SQRT_2 / 2.0);
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-    
+
         let result = m.lighting(&light, &position, &eyev, &normalv);
-    
+
         let expected = Color::new(1.6364, 1.6364, 1.6364);
         assert_eq!(result, expected);
     }
@@ -114,9 +113,9 @@ pub mod tests {
         let eyev = Vec4::vector(0.0, 0.0, -1.0);
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
-    
+
         let result = m.lighting(&light, &position, &eyev, &normalv);
-    
+
         let expected = Color::new(0.1, 0.1, 0.1);
         assert_eq!(result, expected);
     }

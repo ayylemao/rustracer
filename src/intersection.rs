@@ -1,17 +1,45 @@
 use crate::math::ApproxEq;
-use std::cmp::Ordering;
+use crate::ray::Ray;
 use crate::shape::Shape;
+use crate::vec4::Vec4;
+use std::cmp::Ordering;
+
+pub struct Computations<'a> {
+    pub object: &'a dyn Shape,
+    pub point: Vec4,
+    pub eyev: Vec4,
+    pub normalv: Vec4,
+    pub inside: bool,
+}
+impl<'a> Computations<'a> {
+    pub fn new(object: &'a dyn Shape, point: Vec4, eyev: Vec4, normalv: Vec4) -> Self {
+        let (inside, normalv) = if normalv.dot(&eyev) < 0.0 {
+            (true, -normalv)
+        } else {
+            (false, normalv)
+        };
+        Self {
+            object,
+            point,
+            eyev,
+            normalv,
+            inside,
+        }
+    }
+    pub fn object(&self) -> &'a dyn Shape {
+        self.object
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Intersection<'a> {
-    pub id: usize,
     pub t: f64,
-    pub object: &'a dyn Shape
+    pub object: &'a dyn Shape,
 }
 
 impl Intersection<'_> {
-    pub fn new(t: f64, id: usize, object: &dyn Shape) -> Intersection {
-        Intersection {id, t, object }
+    pub fn new(t: f64, object: &dyn Shape) -> Intersection {
+        Intersection {t, object }
     }
 
     pub fn hit<'a>(int_list: &'a [Intersection<'a>]) -> Option<&'a Intersection<'a>> {
@@ -20,10 +48,19 @@ impl Intersection<'_> {
             .filter(|i| i.t >= 0.0)
             .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
     }
+    pub fn prepare_computations(&self, ray: &Ray) -> Computations {
+        let point = ray.position(self.t);
+        Computations::new(
+            self.object,
+            point,
+            -ray.direction,
+            self.object.normal_at(point),
+        )
+    }
 }
 impl PartialEq for Intersection<'_> {
     fn eq(&self, other: &Self) -> bool {
-        self.t.approx_eq(&other.t) && self.id == other.id
+        self.t.approx_eq(&other.t)
     }
 }
 
@@ -50,29 +87,47 @@ pub mod tests {
     #[test]
     fn get_hit() {
         let sphere = Sphere::new();
-        let i1 = Intersection::new(1.0, 1, &sphere);
-        let i2 = Intersection::new(2.0, 1, &sphere);
+        let i1 = Intersection::new(1.0, &sphere);
+        let i2 = Intersection::new(2.0, &sphere);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(i1, *i.unwrap());
 
-        let i1 = Intersection::new(-1.0, 1, &sphere);
-        let i2 = Intersection::new(1.0, 1, &sphere);
+        let i1 = Intersection::new(-1.0, &sphere);
+        let i2 = Intersection::new(1.0, &sphere);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(i2, *i.unwrap());
-        let i1 = Intersection::new(-1.0, 1, &sphere);
-        let i2 = Intersection::new(-1.0, 1, &sphere);
+        let i1 = Intersection::new(-1.0, &sphere);
+        let i2 = Intersection::new(-1.0, &sphere);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(None, i);
 
-        let i1 = Intersection::new(5.0, 1, &sphere);
-        let i2 = Intersection::new(7.0, 1, &sphere);
-        let i3 = Intersection::new(-3.0, 1, &sphere);
-        let i4 = Intersection::new(2.0, 1, &sphere);
+        let i1 = Intersection::new(5.0, &sphere);
+        let i2 = Intersection::new(7.0, &sphere);
+        let i3 = Intersection::new(-3.0, &sphere);
+        let i4 = Intersection::new(2.0, &sphere);
         let xs = vec![i1, i2, i3, i4];
         let i = Intersection::hit(&xs);
         assert_eq!(*i.unwrap(), i4);
+    }
+
+    #[test]
+    pub fn hit_when_intersection_outside_inside() {
+        let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
+        let s = Sphere::new();
+        let i = Intersection::new(4.0,  &s);
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.inside, false);
+
+        let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let s = Sphere::new();
+        let i = Intersection::new(1.0,  &s);
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.point, Vec4::point(0.0, 0.0, 1.0));
+        assert_eq!(comps.eyev, Vec4::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.inside, true);
+        assert_eq!(comps.normalv, Vec4::vector(0.0, 0.0, -1.0));
     }
 }
