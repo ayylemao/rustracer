@@ -1,4 +1,4 @@
-use crate::math::ApproxEq;
+use crate::math::{ApproxEq, EPSILON};
 use crate::ray::Ray;
 use crate::shape::Shape;
 use crate::vec4::Vec4;
@@ -10,6 +10,7 @@ pub struct Computations<'a> {
     pub eyev: Vec4,
     pub normalv: Vec4,
     pub inside: bool,
+    pub over_point: Vec4,
 }
 impl<'a> Computations<'a> {
     pub fn new(object: &'a dyn Shape, point: Vec4, eyev: Vec4, normalv: Vec4) -> Self {
@@ -18,12 +19,14 @@ impl<'a> Computations<'a> {
         } else {
             (false, normalv)
         };
+        let over_point = point + normalv * EPSILON;
         Self {
             object,
             point,
             eyev,
             normalv,
             inside,
+            over_point,
         }
     }
     pub fn object(&self) -> &'a dyn Shape {

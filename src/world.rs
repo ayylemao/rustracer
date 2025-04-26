@@ -61,10 +61,14 @@ impl World {
         xs
     }
     pub fn shade_hit(&self, comps: Computations) -> Color {
-        comps
-            .object()
-            .material()
-            .lighting(&self.light, &comps.point, &comps.eyev, &comps.normalv)
+        let in_shadow = self.is_shadowed(comps.over_point);
+        comps.object().material().lighting(
+            &self.light,
+            &comps.point,
+            &comps.eyev,
+            &comps.normalv,
+            in_shadow,
+        )
     }
     pub fn color_at(&self, ray: &Ray) -> Color {
         let xs = self.intersect(ray);
@@ -75,6 +79,21 @@ impl World {
         };
         let comps = hit.prepare_computations(ray);
         self.shade_hit(comps)
+    }
+    pub fn is_shadowed(&self, point: Vec4) -> bool {
+        let v = self.light.position;
+        let dist = v.magnitude();
+        let dir = v.norm();
+
+        let r = Ray::from_vec4(point, dir);
+        let intersections = self.intersect(&r);
+
+        if let Some(h) = Intersection::hit(&intersections) {
+            if h.t < dist {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -141,5 +160,18 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let c = w.color_at(&r);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn test_shading() {
+        let w = World::default();
+        let p = Vec4::point(-2.0, 2.0, -2.0);
+        assert_eq!(w.is_shadowed(p), false);
+        let w = World::default();
+        let p = Vec4::point(10.0, -10.0, 10.0);
+        assert_eq!(w.is_shadowed(p), true);
+        let w = World::default();
+        let p = Vec4::point(-20.0, 20.0, -20.0);
+        assert_eq!(w.is_shadowed(p), false);
     }
 }

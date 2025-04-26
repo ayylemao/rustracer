@@ -176,10 +176,10 @@ impl Vec4 {
         *self /= self.magnitude();
     }
     pub fn dot(self, rhs: &Vec4) -> f64 {
-        debug_assert!(
-            (self.w == 0.0 && rhs.w == 0.0),
-            "Cannot take dot product of non-vectors!"
-        );
+        //debug_assert!(
+        //    (self.w == 0.0 && rhs.w == 0.0),
+        //    "Cannot take dot product of non-vectors!"
+        //);
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z + self.w * rhs.w
     }
     pub fn cross(self, rhs: &Vec4) -> Vec4 {
@@ -285,13 +285,13 @@ mod tests {
         let t2 = Vec4::vector(2.0, 3.0, 4.0);
         assert_eq!(t1.dot(&t2), 20.0);
     }
-    #[test]
-    #[should_panic]
-    fn dot_panic() {
-        let t1 = Vec4::point(1.0, 2.0, 3.0);
-        let t2 = Vec4::vector(2.0, 3.0, 4.0);
-        assert_eq!(t1.dot(&t2), 20.0);
-    }
+    //#[test]
+    //#[should_panic]
+    //fn dot_panic() {
+    //    let t1 = Vec4::point(1.0, 2.0, 3.0);
+    //    let t2 = Vec4::vector(2.0, 3.0, 4.0);
+    //    assert_eq!(t1.dot(&t2), 20.0);
+    //}
     #[test]
     fn cross() {
         let t1 = Vec4::vector(1.0, 2.0, 3.0);

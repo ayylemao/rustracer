@@ -1,3 +1,5 @@
+use image::{ImageBuffer, Rgb, RgbImage};
+
 use crate::color::Color;
 use std::ops::{Index, IndexMut};
 
@@ -33,6 +35,17 @@ impl Canvas {
         }
         ppm_string.push('\n');
         ppm_string
+    }
+    pub fn save(&self, path: &str) {
+        let mut buffer: RgbImage = ImageBuffer::new(self.width as u32, self.height as u32);
+
+        for (x, y, pixel) in buffer.enumerate_pixels_mut() {
+            let color = self[(x as usize, y as usize)];
+            let (r, g, b) = color.to_rgb_u8();
+
+            *pixel = Rgb([r, g, b])
+        }
+        buffer.save(path).unwrap();
     }
     pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) {
         self[(x, y)] = color;

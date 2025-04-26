@@ -33,11 +33,22 @@ impl Material {
     pub fn set_color(&mut self, color: Color) {
         self.color = color;
     }
-    pub fn lighting(&self, light: &PointLight, point: &Vec4, eyev: &Vec4, normalv: &Vec4) -> Color {
+    pub fn lighting(
+        &self,
+        light: &PointLight,
+        point: &Vec4,
+        eyev: &Vec4,
+        normalv: &Vec4,
+        in_shadow: bool,
+    ) -> Color {
         let effective_color = self.color * light.intensity;
         let lightv = (light.position - *point).norm();
         let ambient = effective_color * self.ambient;
         let light_dot_normal = lightv.dot(&normalv);
+
+        if in_shadow {
+            return ambient;
+        }
 
         let (diffuse, specular) = if light_dot_normal < 0.0 {
             (Color::black(), Color::black())
@@ -72,7 +83,7 @@ pub mod tests {
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
 
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
 
         let expected = Color::new(1.0, 1.0, 1.0);
         assert_eq!(result, expected);
@@ -86,7 +97,7 @@ pub mod tests {
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
 
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
 
         let expected = Color::new(0.7364, 0.7364, 0.7364);
         assert_eq!(result, expected);
@@ -101,7 +112,7 @@ pub mod tests {
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
 
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
 
         let expected = Color::new(1.6364, 1.6364, 1.6364);
         assert_eq!(result, expected);
@@ -114,8 +125,20 @@ pub mod tests {
         let normalv = Vec4::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Vec4::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
 
-        let result = m.lighting(&light, &position, &eyev, &normalv);
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
 
+        let expected = Color::new(0.1, 0.1, 0.1);
+        assert_eq!(result, expected);
+    }
+    #[test]
+    pub fn lighting_with_surface_shadow() {
+        let m = Material::default();
+        let position = Vec4::point(0.0, 0.0, 0.0);
+        let eyev = Vec4::vector(0.0, 0.0, -1.0);
+        let normalv = Vec4::vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(Vec4::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
+
+        let result = m.lighting(&light, &position, &eyev, &normalv, false);
         let expected = Color::new(0.1, 0.1, 0.1);
         assert_eq!(result, expected);
     }

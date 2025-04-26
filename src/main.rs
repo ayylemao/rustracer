@@ -2,13 +2,10 @@ use raytracer::{
     camera::Camera, color::Color, light::PointLight, matrix::Matrix, shape::Sphere, vec4::Vec4,
     world::World,
 };
-use std::{
-    f64::consts::PI,
-    io::{BufWriter, Write},
-};
+use std::f64::consts::PI;
 
-const WIDTH: usize = 1000;
-const HEIGHT: usize = 500;
+const WIDTH: usize = 1600;
+const HEIGHT: usize = 800;
 fn main() {
     // shapes
     let mut floor = Sphere::new();
@@ -56,7 +53,7 @@ fn main() {
 
     // World Setup
     let mut world = World::new(PointLight::new(
-        Vec4::point(-10.0, 10.0, -10.0),
+        Vec4::point(-10.0, 100.0, -10.0),
         Color::white(),
     ));
     world.add_shape(Box::new(floor));
@@ -74,8 +71,5 @@ fn main() {
     );
 
     let image = camera.render(&world);
-
-    let file = std::fs::File::create("test.ppm").unwrap();
-    let mut buff = BufWriter::new(file);
-    buff.write(image.to_ppm().as_bytes()).unwrap();
+    image.save("image.png");
 }
