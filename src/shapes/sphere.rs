@@ -1,12 +1,10 @@
-use super::Shape;
+use super::{next_shape_id, Shape};
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
 use crate::vec4::Vec4;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
-static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
@@ -17,7 +15,7 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new() -> Sphere {
-        let id = SHAPE_ID.fetch_add(1, Ordering::Relaxed);
+        let id = next_shape_id();
         Sphere {
             id,
             transform: Matrix::<4, 4>::eye(),
@@ -25,7 +23,7 @@ impl Sphere {
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
-        let id = SHAPE_ID.fetch_add(1, Ordering::Relaxed);
+        let id = next_shape_id();
         Sphere {
             id,
             transform: mat,
@@ -35,9 +33,8 @@ impl Sphere {
 }
 
 impl Shape for Sphere {
-    fn intersect<'a>(&'a self, ray_in: &Ray) -> Vec<Intersection<'a>> {
+    fn local_intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let mut intersection: Vec<Intersection> = Vec::new();
-        let ray = ray_in.transform(&self.transform.inverse());
         let sphere_to_ray = ray.origin - Vec4::point(0.0, 0.0, 0.0);
         let a = ray.direction.dot(&ray.direction);
         let b = ray.direction.dot(&sphere_to_ray) * 2.0;
@@ -62,8 +59,8 @@ impl Shape for Sphere {
         self.transform.clone()
     }
 
-    fn material(&self) -> Material {
-        self.material
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn set_transformation(&mut self, mat: Matrix<4, 4>) {
@@ -95,7 +92,6 @@ pub mod tests {
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let xs = s1.intersect(&ray);
         assert!(xs.len() == 2);
-        //assert!(*xs[0].object == s1.id && xs[1].id == s1.id)
     }
     #[test]
     fn intersect_with_trans() {

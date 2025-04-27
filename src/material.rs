@@ -1,8 +1,6 @@
-use std::ops::Neg;
+use crate::{color::Color, light::PointLight, patterns::Pattern, vec4::Vec4};
 
-use crate::{color::Color, light::PointLight, vec4::Vec4};
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Material {
     pub color: Color,
     pub ambient: f64,
@@ -55,7 +53,7 @@ impl Material {
         } else {
             let diffuse = effective_color * self.diffuse * light_dot_normal;
 
-            let reflectv = lightv.neg().reflect(&normalv);
+            let reflectv = (-lightv).reflect(&normalv);
             let reflect_dot_eye = reflectv.dot(&eyev);
 
             let specular = if reflect_dot_eye <= 0.0 {
@@ -69,6 +67,8 @@ impl Material {
         ambient + diffuse + specular
     }
 }
+
+
 
 #[cfg(test)]
 pub mod tests {

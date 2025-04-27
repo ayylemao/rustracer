@@ -12,3 +12,4 @@ pub use shapes::sphere::Sphere;
 pub mod transform;
 pub mod vec4;
 pub mod world;
+pub mod patterns;
