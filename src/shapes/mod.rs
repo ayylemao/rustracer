@@ -15,7 +15,7 @@ pub fn next_shape_id() -> usize {
     SHAPE_ID.fetch_add(1, Ordering::Relaxed)
 }
 
-pub trait Shape: Debug {
+pub trait Shape: Debug + Sync + Send {
     fn intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let local_ray = ray.transform(&self.transform().inverse());
         self.local_intersect(&local_ray)

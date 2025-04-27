@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     Sphere,
     color::Color,
@@ -13,7 +15,7 @@ use crate::{
 #[derive(Debug)]
 pub struct World {
     pub light: PointLight,
-    pub shapes: Vec<Box<dyn Shape>>,
+    pub shapes: Vec<Arc<dyn Shape + Send + Sync>>,
 }
 
 impl World {
@@ -39,18 +41,18 @@ impl World {
         mat1.diffuse = 0.7;
         mat1.specular = 0.2;
         s1.set_material(mat1);
-        let s1 = Box::new(s1);
+        let s1 = Arc::new(s1);
 
         let mut s2 = Sphere::new();
         s2.set_material(Material::default());
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let s2 = Box::new(s2);
+        let s2 = Arc::new(s2);
 
         world.add_shape(s1);
         world.add_shape(s2);
         world
     }
-    pub fn add_shape(&mut self, shape: Box<dyn Shape>) {
+    pub fn add_shape(&mut self, shape: Arc<dyn Shape>) {
         self.shapes.push(shape);
     }
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
@@ -113,7 +115,9 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use std::f64::consts::SQRT_2;
+    use std::sync::Arc;
 
+    use crate::Sphere;
     use crate::color::Color;
     use crate::intersection::Intersection;
     use crate::light::PointLight;
@@ -122,7 +126,6 @@ pub mod tests {
     use crate::ray::Ray;
     use crate::shapes::plane::Plane;
     use crate::vec4::Vec4;
-    use crate::Sphere;
 
     use super::World;
 
@@ -196,7 +199,6 @@ pub mod tests {
 
     #[test]
     fn reflect_on_non_reflect() {
-
         let mut world = World {
             light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
             shapes: Vec::new(),
@@ -214,17 +216,17 @@ pub mod tests {
         let s1 = Sphere {
             id: 0,
             transform: Matrix::eye(),
-            material: mat1
+            material: mat1,
         };
-        let s1 = Box::new(s1);
+        let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
         mat2.ambient = 1.0;
-        let s2 = Sphere { 
+        let s2 = Sphere {
             id: 1,
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
         };
-        let s2 = Box::new(s2);
+        let s2 = Arc::new(s2);
 
         world.add_shape(s1);
         world.add_shape(s2);
@@ -237,7 +239,6 @@ pub mod tests {
         let color = world.reflected_color(&comps, 3);
         assert_eq!(color, Color::black());
     }
-
 
     #[test]
     fn reflected_color_for_a_reflective_material() {
@@ -258,17 +259,17 @@ pub mod tests {
         let s1 = Sphere {
             id: 0,
             transform: Matrix::eye(),
-            material: mat1
+            material: mat1,
         };
-        let s1 = Box::new(s1);
+        let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
         mat2.ambient = 1.0;
-        let s2 = Sphere { 
+        let s2 = Sphere {
             id: 1,
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
         };
-        let s2 = Box::new(s2);
+        let s2 = Arc::new(s2);
 
         world.add_shape(s1);
         world.add_shape(s2);
@@ -278,11 +279,11 @@ pub mod tests {
         let plane = Plane {
             id: 2,
             material: mat3,
-            transform: Matrix::translation(0.0, -1.0, 0.0)
+            transform: Matrix::translation(0.0, -1.0, 0.0),
         };
-        world.add_shape(Box::new(plane));
+        world.add_shape(Arc::new(plane));
 
-        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());
@@ -310,17 +311,17 @@ pub mod tests {
         let s1 = Sphere {
             id: 0,
             transform: Matrix::eye(),
-            material: mat1
+            material: mat1,
         };
-        let s1 = Box::new(s1);
+        let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
         mat2.ambient = 1.0;
-        let s2 = Sphere { 
+        let s2 = Sphere {
             id: 1,
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
         };
-        let s2 = Box::new(s2);
+        let s2 = Arc::new(s2);
 
         world.add_shape(s1);
         world.add_shape(s2);
@@ -330,11 +331,11 @@ pub mod tests {
         let plane = Plane {
             id: 2,
             material: mat3,
-            transform: Matrix::translation(0.0, -1.0, 0.0)
+            transform: Matrix::translation(0.0, -1.0, 0.0),
         };
-        world.add_shape(Box::new(plane));
+        world.add_shape(Arc::new(plane));
 
-        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());
@@ -355,37 +356,37 @@ pub mod tests {
         let lower = Plane {
             id: 0,
             transform: Matrix::translation(0.0, -1.0, 0.0),
-            material: mat1
+            material: mat1,
         };
-        world.add_shape(Box::new(lower));
+        world.add_shape(Arc::new(lower));
 
         let mut mat2 = Material::default();
         mat2.reflective = 1.0;
         let higher = Plane {
             id: 1,
             transform: Matrix::translation(0.0, 1.0, 0.0),
-            material: mat2
+            material: mat2,
         };
-        world.add_shape(Box::new(higher));
+        world.add_shape(Arc::new(higher));
 
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-        
+
         let _c = world.color_at(&r, 0);
     }
     #[test]
     fn color_at_max_recursion() {
         let mut world = World::default();
- 
+
         let mut mat3 = Material::default();
         mat3.reflective = 0.5;
         let plane = Plane {
             id: 2,
             material: mat3,
-            transform: Matrix::translation(0.0, -1.0, 0.0)
+            transform: Matrix::translation(0.0, -1.0, 0.0),
         };
-        world.add_shape(Box::new(plane));
+        world.add_shape(Arc::new(plane));
 
-        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());

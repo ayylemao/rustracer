@@ -1,6 +1,6 @@
-use crate::{
-    color::Color, light::PointLight, patterns::Pattern, shapes::Shape, vec4::Vec4,
-};
+use std::sync::Arc;
+
+use crate::{color::Color, light::PointLight, patterns::Pattern, shapes::Shape, vec4::Vec4};
 
 #[derive(Debug)]
 pub struct Material {
@@ -9,8 +9,8 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
-    pub pattern: Option<Box<dyn Pattern>>,
-    pub reflective: f64
+    pub pattern: Option<Arc<dyn Pattern + Send + Sync>>,
+    pub reflective: f64,
 }
 
 impl Material {
@@ -22,10 +22,17 @@ impl Material {
             specular: 0.9,
             shininess: 200.0,
             pattern: None,
-            reflective: 0.0
+            reflective: 0.0,
         }
     }
-    pub fn new(color: Color, ambient: f64, diffuse: f64, specular: f64, shininess: f64, reflective: f64) -> Self {
+    pub fn new(
+        color: Color,
+        ambient: f64,
+        diffuse: f64,
+        specular: f64,
+        shininess: f64,
+        reflective: f64,
+    ) -> Self {
         Self {
             color,
             ambient,
@@ -33,14 +40,14 @@ impl Material {
             specular,
             shininess,
             pattern: None,
-            reflective
+            reflective,
         }
     }
     pub fn set_color(&mut self, color: Color) {
         self.color = color;
     }
     pub fn set_pattern(&mut self, pattern: impl Pattern + 'static) {
-        self.pattern = Some(Box::new(pattern));
+        self.pattern = Some(Arc::new(pattern));
     }
     pub fn lighting(
         material: &Material,

@@ -9,7 +9,7 @@ pub mod gradient;
 pub mod ring;
 pub mod stripe_pattern;
 
-pub trait Pattern: Debug {
+pub trait Pattern: Debug + Sync + Send {
     fn color_at(&self, point: &Vec4) -> Color;
     fn transform(&self) -> &Matrix<4, 4>;
     fn set_transformation(&mut self, matrix: Matrix<4, 4>);

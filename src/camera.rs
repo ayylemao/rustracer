@@ -1,4 +1,6 @@
-use crate::{canvas::Canvas, matrix::Matrix, ray::Ray, vec4::Vec4, world::World};
+use crate::{canvas::Canvas, color::Color, matrix::Matrix, ray::Ray, vec4::Vec4, world::World};
+use rayon::ThreadPoolBuilder;
+use rayon::prelude::*;
 
 pub struct Camera {
     pub hsize: usize,
@@ -8,11 +10,18 @@ pub struct Camera {
     pub pixel_size: f64,
     pub half_width: f64,
     pub half_height: f64,
-    pub reflection_max: usize
+    pub reflection_max: usize,
+    pub max_threads: usize,
 }
 
 impl Camera {
-    pub fn new(hsize: usize, vsize: usize, fov: f64, reflection_max: usize) -> Self {
+    pub fn new(
+        hsize: usize,
+        vsize: usize,
+        fov: f64,
+        reflection_max: usize,
+        max_threads: usize,
+    ) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = hsize as f64 / vsize as f64;
         let (half_width, half_height) = if aspect >= 1.0 {
@@ -31,7 +40,8 @@ impl Camera {
             pixel_size,
             half_width,
             half_height,
-            reflection_max
+            reflection_max,
+            max_threads,
         }
     }
     pub fn set_view(&mut self, from: Vec4, to: Vec4, up: Vec4) {
@@ -69,12 +79,26 @@ impl Camera {
     }
     pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
-        for y in 0..self.vsize {
-            for x in 0..self.hsize {
-                let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray, self.reflection_max);
-                image.set_pixel(x, y, color);
-            }
+
+        let pool = ThreadPoolBuilder::new()
+            .num_threads(self.max_threads)
+            .build()
+            .unwrap();
+
+        let pixels: Vec<(usize, usize)> = (0..self.vsize)
+            .flat_map(|y| (0..self.hsize).map(move |x| (x, y)))
+            .collect();
+        let results: Vec<((usize, usize), Color)> = pool
+            .install(|| {
+                pixels.into_par_iter().map(|(x, y)| {
+                    let ray = self.ray_for_pixel(x, y);
+                    let color = world.color_at(&ray, self.reflection_max);
+                    ((x, y), color)
+                })
+            })
+            .collect();
+        for ((x, y), color) in results {
+            image.set_pixel(x, y, color);
         }
         image
     }
@@ -115,21 +139,21 @@ pub mod tests {
     }
     #[test]
     fn center_canvas() {
-        let c = Camera::new(201, 101, PI / 2.0, 0);
+        let c = Camera::new(201, 101, PI / 2.0, 0, 1);
         let r = c.ray_for_pixel(100, 50);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
         assert_eq!(r.direction, Vec4::vector(0.0, 0.0, -1.0));
     }
     #[test]
     fn corner_canvas() {
-        let c = Camera::new(201, 101, PI / 2.0, 0);
+        let c = Camera::new(201, 101, PI / 2.0, 0, 1);
         let r = c.ray_for_pixel(0, 0);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
         assert_eq!(r.direction, Vec4::vector(0.66519, 0.33259, -0.66851));
     }
     #[test]
     fn corner_canvas_transform() {
-        let mut c = Camera::new(201, 101, PI / 2.0, 0);
+        let mut c = Camera::new(201, 101, PI / 2.0, 0, 1);
         c.set_view_from_matrix(Matrix::rotation_y(PI / 4.0) * Matrix::translation(0.0, -2.0, 5.0));
         let r = c.ray_for_pixel(100, 50);
 
@@ -139,7 +163,7 @@ pub mod tests {
     #[test]
     fn render_func() {
         let w = World::default();
-        let mut c = Camera::new(11, 11, PI / 2.0, 0);
+        let mut c = Camera::new(11, 11, PI / 2.0, 0, 1);
         let from = Vec4::point(0.0, 0.0, -5.0);
         let to = Vec4::point(0.0, 0.0, 0.0);
         let up = Vec4::vector(0.0, 1.0, 0.0);
