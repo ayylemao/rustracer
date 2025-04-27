@@ -86,7 +86,7 @@ pub mod tests {
     use crate::Sphere;
 
     use super::*;
-    
+
     #[test]
     fn get_hit() {
         let sphere = Sphere::new();

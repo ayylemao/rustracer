@@ -1,4 +1,5 @@
 use crate::{
+    Sphere,
     color::Color,
     intersection::{Computations, Intersection},
     light::PointLight,
@@ -6,7 +7,7 @@ use crate::{
     matrix::Matrix,
     ray::Ray,
     shapes::Shape,
-    vec4::Vec4, Sphere,
+    vec4::Vec4,
 };
 
 #[derive(Debug)]
@@ -62,7 +63,9 @@ impl World {
     }
     pub fn shade_hit(&self, comps: Computations) -> Color {
         let in_shadow = self.is_shadowed(&comps.over_point);
-        comps.object().material().lighting(
+        Material::lighting(
+            comps.object().material(),
+            comps.object,
             &self.light,
             &comps.point,
             &comps.eyev,

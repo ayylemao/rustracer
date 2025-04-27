@@ -1,13 +1,17 @@
-use super::{next_shape_id, Shape};
-use crate::{intersection::Intersection, material::Material, math::EPSILON, matrix::{Matrix, SqMatrix}, vec4::Vec4};
+use super::{Shape, next_shape_id};
+use crate::{
+    intersection::Intersection,
+    material::Material,
+    math::EPSILON,
+    matrix::{Matrix, SqMatrix},
+    vec4::Vec4,
+};
 
-
-
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Plane {
     pub id: usize,
     pub transform: SqMatrix<4>,
-    pub material: Material
+    pub material: Material,
 }
 
 impl Plane {
@@ -30,7 +34,10 @@ impl Plane {
 }
 
 impl Shape for Plane {
-    fn local_intersect<'a>(&'a self, ray: &crate::ray::Ray) -> Vec<crate::intersection::Intersection<'a>> {
+    fn local_intersect<'a>(
+        &'a self,
+        ray: &crate::ray::Ray,
+    ) -> Vec<crate::intersection::Intersection<'a>> {
         if ray.direction.y.abs() < EPSILON {
             return vec![];
         } else {
@@ -44,8 +51,8 @@ impl Shape for Plane {
         Vec4::vector(0.0, 1.0, 0.0)
     }
 
-    fn transform(&self) -> SqMatrix<4> {
-        self.transform.clone()
+    fn transform(&self) -> &SqMatrix<4> {
+        &self.transform
     }
 
     fn material(&self) -> &Material {
@@ -53,14 +60,13 @@ impl Shape for Plane {
     }
 
     fn set_transformation(&mut self, mat: SqMatrix<4>) {
-        self.transform = mat; 
+        self.transform = mat;
     }
 
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
 }
-
 
 #[cfg(test)]
 pub mod tests {

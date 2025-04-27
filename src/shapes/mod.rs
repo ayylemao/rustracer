@@ -6,8 +6,8 @@ use crate::vec4::Vec4;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-pub mod sphere;
 pub mod plane;
+pub mod sphere;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -29,7 +29,7 @@ pub trait Shape: Debug {
         world_normal.norm()
     }
     fn local_normal_at(&self, local_point: Vec4) -> Vec4;
-    fn transform(&self) -> SqMatrix<4>;
+    fn transform(&self) -> &SqMatrix<4>;
     fn material(&self) -> &Material;
     fn set_transformation(&mut self, mat: SqMatrix<4>);
     fn set_material(&mut self, material: Material);

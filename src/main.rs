@@ -1,5 +1,13 @@
 use raytracer::{
-    camera::Camera, color::Color, light::PointLight, matrix::Matrix, shapes::{plane::Plane, Shape}, vec4::Vec4, world::World, Sphere
+    Sphere,
+    camera::Camera,
+    color::Color,
+    light::PointLight,
+    matrix::Matrix,
+    patterns::StripePattern,
+    shapes::{Shape, plane::Plane},
+    vec4::Vec4,
+    world::World,
 };
 use std::f64::consts::PI;
 
@@ -9,23 +17,23 @@ fn main() {
     // shapes
     let mut floor = Plane::new();
     floor.material.set_color(Color::new(0.0, 0.9, 0.9));
+    let pat = StripePattern::new(Color::magenta(), Color::cyan());
+    floor.material.set_pattern(pat);
     floor.material.specular = 5.0;
 
     let mut back = Plane::new();
     back.material.set_color(Color::new(0.9, 0.9, 0.9));
-    back.set_transformation(
-        Matrix::translation(0.0, 0.0, 10.0) * Matrix::rotation_x(PI / 2.0)
-    );
+    back.set_transformation(Matrix::translation(0.0, 0.0, 10.0) * Matrix::rotation_x(PI / 2.0));
     back.material.specular = 0.0;
 
     let mut midwall = Plane::new();
     midwall.material.set_color(Color::new(0.9, 0.9, 0.9));
     midwall.set_transformation(
-        Matrix::rotation_y(PI / 2.0) * Matrix::translation(0.0, 0.0, 10.0) * Matrix::rotation_x(PI / 2.0)
+        Matrix::rotation_y(PI / 2.0)
+            * Matrix::translation(0.0, 0.0, 10.0)
+            * Matrix::rotation_x(PI / 2.0),
     );
     midwall.material.specular = 0.0;
-    
-    
 
     let mut middle = Sphere::new();
     middle.set_transformation(Matrix::translation(-0.5, 1.0, 0.5));

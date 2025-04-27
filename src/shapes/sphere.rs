@@ -1,12 +1,11 @@
-use super::{next_shape_id, Shape};
+use super::{Shape, next_shape_id};
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
 use crate::vec4::Vec4;
 
-
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Sphere {
     pub id: usize,
     pub transform: SqMatrix<4>,
@@ -55,8 +54,8 @@ impl Shape for Sphere {
         local_point - Vec4::point(0.0, 0.0, 0.0)
     }
 
-    fn transform(&self) -> SqMatrix<4> {
-        self.transform.clone()
+    fn transform(&self) -> &SqMatrix<4> {
+        &self.transform
     }
 
     fn material(&self) -> &Material {
@@ -71,7 +70,6 @@ impl Shape for Sphere {
         self.material = material;
     }
 }
-
 
 #[cfg(test)]
 pub mod tests {

@@ -34,6 +34,77 @@ impl Color {
             b: 0.0,
         }
     }
+    pub fn red() -> Color {
+        Color {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+        }
+    }
+
+    pub fn green() -> Color {
+        Color {
+            r: 0.0,
+            g: 1.0,
+            b: 0.0,
+        }
+    }
+
+    pub fn blue() -> Color {
+        Color {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+        }
+    }
+
+    pub fn yellow() -> Color {
+        Color {
+            r: 1.0,
+            g: 1.0,
+            b: 0.0,
+        }
+    }
+
+    pub fn cyan() -> Color {
+        Color {
+            r: 0.0,
+            g: 1.0,
+            b: 1.0,
+        }
+    }
+
+    pub fn magenta() -> Color {
+        Color {
+            r: 1.0,
+            g: 0.0,
+            b: 1.0,
+        }
+    }
+
+    pub fn gray() -> Color {
+        Color {
+            r: 0.5,
+            g: 0.5,
+            b: 0.5,
+        }
+    }
+
+    pub fn dark_gray() -> Color {
+        Color {
+            r: 0.25,
+            g: 0.25,
+            b: 0.25,
+        }
+    }
+
+    pub fn light_gray() -> Color {
+        Color {
+            r: 0.75,
+            g: 0.75,
+            b: 0.75,
+        }
+    }
     pub fn to_rgb_u8(self) -> (u8, u8, u8) {
         (
             (self.r.clamp(0.0, 1.0) * 255.0f64).round() as u8,
