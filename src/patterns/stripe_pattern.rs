@@ -6,17 +6,14 @@ use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub struct StripePattern {
-    pub colors: Vec<Color>,
+    pub colors: [Color; 2],
     pub transform: Matrix<4, 4>,
 }
 
 impl StripePattern {
     pub fn new(a: Color, b: Color) -> Self {
-        let mut cs: Vec<Color> = Vec::new();
-        cs.push(a);
-        cs.push(b);
         StripePattern {
-            colors: cs,
+            colors: [a, b],
             transform: Matrix::eye(),
         }
     }

@@ -1,4 +1,4 @@
-use crate::{color::Color, light::PointLight, patterns::Pattern, shapes::Shape, vec4::Vec4};
+use crate::{color::Color, light::PointLight, math::ApproxEq, patterns::Pattern, shapes::Shape, vec4::Vec4};
 
 #[derive(Debug)]
 pub struct Material {

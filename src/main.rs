@@ -1,13 +1,5 @@
 use raytracer::{
-    Sphere,
-    camera::Camera,
-    color::Color,
-    light::PointLight,
-    matrix::Matrix,
-    patterns::StripePattern,
-    shapes::{Shape, plane::Plane},
-    vec4::Vec4,
-    world::World,
+    camera::Camera, color::Color, light::PointLight, matrix::Matrix, patterns::{checker::Checker, gradient::Gradient, Pattern}, shapes::{plane::Plane, Shape}, vec4::Vec4, world::World, Sphere
 };
 use std::f64::consts::PI;
 
@@ -17,7 +9,8 @@ fn main() {
     // shapes
     let mut floor = Plane::new();
     floor.material.set_color(Color::new(0.0, 0.9, 0.9));
-    let pat = StripePattern::new(Color::magenta(), Color::cyan());
+    let mut pat = Gradient::new(Color::magenta(), Color::cyan());
+    pat.set_transformation(Matrix::translation(8.0, 0.0, 0.0) * Matrix::scaling(12.0, 1.0, 1.0));
     floor.material.set_pattern(pat);
     floor.material.specular = 5.0;
 
@@ -33,6 +26,8 @@ fn main() {
             * Matrix::translation(0.0, 0.0, 10.0)
             * Matrix::rotation_x(PI / 2.0),
     );
+    let pat = Checker::new(Color::white(), Color::black());
+    midwall.material.set_pattern(pat);
     midwall.material.specular = 0.0;
 
     let mut middle = Sphere::new();
@@ -40,6 +35,8 @@ fn main() {
     middle.material.set_color(Color::new(0.1, 1.0, 0.5));
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
+    let pat = Checker::new(Color::white(), Color::green());
+    middle.material.set_pattern(pat);
 
     let mut right = Sphere::new();
     right.set_transformation(Matrix::translation(1.5, 0.5, -0.5) * Matrix::scaling(0.5, 0.5, 0.5));
