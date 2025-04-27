@@ -1,5 +1,13 @@
 use raytracer::{
-    camera::Camera, color::Color, light::PointLight, matrix::Matrix, patterns::{checker::Checker, gradient::Gradient, Pattern}, shapes::{plane::Plane, Shape}, vec4::Vec4, world::World, Sphere
+    Sphere,
+    camera::Camera,
+    color::Color,
+    light::PointLight,
+    matrix::Matrix,
+    patterns::{Pattern, checker::Checker, gradient::Gradient},
+    shapes::{Shape, plane::Plane},
+    vec4::Vec4,
+    world::World,
 };
 use std::f64::consts::PI;
 

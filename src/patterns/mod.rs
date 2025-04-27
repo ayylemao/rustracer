@@ -4,10 +4,10 @@ use crate::{color::Color, vec4::Vec4};
 use std::clone::Clone;
 use std::fmt::Debug;
 
-pub mod gradient;
-pub mod stripe_pattern;
-pub mod ring;
 pub mod checker;
+pub mod gradient;
+pub mod ring;
+pub mod stripe_pattern;
 
 pub trait Pattern: Debug {
     fn color_at(&self, point: &Vec4) -> Color;

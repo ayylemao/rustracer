@@ -45,13 +45,7 @@ pub mod tests {
     fn grad() {
         let p = Ring::new(Color::white(), Color::black());
         assert_eq!(p.color_at(&Vec4::point(0.0, 0.0, 0.0)), Color::white());
-        assert_eq!(
-            p.color_at(&Vec4::point(1.0, 0.0, 0.0)),
-            Color::black()
-        );
-        assert_eq!(
-            p.color_at(&Vec4::point(0.708, 0.0, 0.708)),
-            Color::black()
-        );
+        assert_eq!(p.color_at(&Vec4::point(1.0, 0.0, 0.0)), Color::black());
+        assert_eq!(p.color_at(&Vec4::point(0.708, 0.0, 0.708)), Color::black());
     }
 }
