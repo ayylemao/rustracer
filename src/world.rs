@@ -61,9 +61,9 @@ impl World {
         xs.sort();
         xs
     }
-    pub fn shade_hit(&self, comps: Computations) -> Color {
+    pub fn shade_hit(&self, comps: Computations, remaining: usize) -> Color {
         let in_shadow = self.is_shadowed(&comps.over_point);
-        Material::lighting(
+        let surface = Material::lighting(
             comps.object().material(),
             comps.object,
             &self.light,
@@ -71,13 +71,15 @@ impl World {
             &comps.eyev,
             &comps.normalv,
             in_shadow,
-        )
+        );
+        let reflected = self.reflected_color(&comps, remaining);
+        surface + reflected
     }
-    pub fn color_at(&self, ray: &Ray) -> Color {
+    pub fn color_at(&self, ray: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(ray);
         if let Some(hit) = Intersection::hit(&xs) {
             let comps = hit.prepare_computations(ray);
-            self.shade_hit(comps)
+            self.shade_hit(comps, remaining)
         } else {
             Color::black()
         }
@@ -97,15 +99,30 @@ impl World {
         }
         false
     }
+    pub fn reflected_color(&self, comps: &Computations, remaining: usize) -> Color {
+        let c = if comps.object.material().reflective == 0.0 || remaining <= 0 {
+            Color::black()
+        } else {
+            let reflect_ray = Ray::from_vec4(comps.over_point, comps.reflectv);
+            self.color_at(&reflect_ray, remaining - 1)
+        };
+        c * comps.object.material().reflective
+    }
 }
 
 #[cfg(test)]
 pub mod tests {
+    use std::f64::consts::SQRT_2;
+
     use crate::color::Color;
     use crate::intersection::Intersection;
     use crate::light::PointLight;
+    use crate::material::Material;
+    use crate::matrix::Matrix;
     use crate::ray::Ray;
+    use crate::shapes::plane::Plane;
     use crate::vec4::Vec4;
+    use crate::Sphere;
 
     use super::World;
 
@@ -129,7 +146,7 @@ pub mod tests {
         let shape = &*w.shapes[0]; // first object
         let i = Intersection::new(4.0, shape);
         let comps = i.prepare_computations(&r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, 0);
 
         let expected = Color::new(0.38066, 0.47583, 0.2855);
         assert_eq!(c, expected);
@@ -144,7 +161,7 @@ pub mod tests {
         let shape = &*w.shapes[1];
         let i = Intersection::new(0.5, shape);
         let comps = i.prepare_computations(&r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, 0);
 
         let expected = Color::new(0.90498, 0.90498, 0.90498);
         assert_eq!(c, expected);
@@ -153,14 +170,14 @@ pub mod tests {
     fn ray_miss() {
         let w = World::default();
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 1.0, 0.0);
-        let c = w.color_at(&r);
+        let c = w.color_at(&r, 0);
         assert_eq!(c, Color::black());
     }
     #[test]
     fn ray_hit() {
         let w = World::default();
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
-        let c = w.color_at(&r);
+        let c = w.color_at(&r, 0);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
@@ -175,5 +192,205 @@ pub mod tests {
         let w = World::default();
         let p = Vec4::point(-20.0, 20.0, -20.0);
         assert_eq!(w.is_shadowed(&p), false);
+    }
+
+    #[test]
+    fn reflect_on_non_reflect() {
+
+        let mut world = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+
+        let s1 = Sphere {
+            id: 0,
+            transform: Matrix::eye(),
+            material: mat1
+        };
+        let s1 = Box::new(s1);
+        let mut mat2 = Material::default();
+        mat2.ambient = 1.0;
+        let s2 = Sphere { 
+            id: 1,
+            material: mat2,
+            transform: Matrix::scaling(0.5, 0.5, 0.5),
+        };
+        let s2 = Box::new(s2);
+
+        world.add_shape(s1);
+        world.add_shape(s2);
+
+        let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let shape = &world.shapes[1];
+
+        let i = Intersection::new(1.0, shape.as_ref());
+        let comps = i.prepare_computations(&r);
+        let color = world.reflected_color(&comps, 3);
+        assert_eq!(color, Color::black());
+    }
+
+
+    #[test]
+    fn reflected_color_for_a_reflective_material() {
+        let mut world = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+
+        let s1 = Sphere {
+            id: 0,
+            transform: Matrix::eye(),
+            material: mat1
+        };
+        let s1 = Box::new(s1);
+        let mut mat2 = Material::default();
+        mat2.ambient = 1.0;
+        let s2 = Sphere { 
+            id: 1,
+            material: mat2,
+            transform: Matrix::scaling(0.5, 0.5, 0.5),
+        };
+        let s2 = Box::new(s2);
+
+        world.add_shape(s1);
+        world.add_shape(s2);
+
+        let mut mat3 = Material::default();
+        mat3.reflective = 0.5;
+        let plane = Plane {
+            id: 2,
+            material: mat3,
+            transform: Matrix::translation(0.0, -1.0, 0.0)
+        };
+        world.add_shape(Box::new(plane));
+
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let shape = &world.shapes[2];
+
+        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let comps = i.prepare_computations(&r);
+        let color = world.reflected_color(&comps, 3);
+        assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
+    }
+
+    #[test]
+    fn shade_hit_with_reflective_material() {
+        let mut world = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+
+        let s1 = Sphere {
+            id: 0,
+            transform: Matrix::eye(),
+            material: mat1
+        };
+        let s1 = Box::new(s1);
+        let mut mat2 = Material::default();
+        mat2.ambient = 1.0;
+        let s2 = Sphere { 
+            id: 1,
+            material: mat2,
+            transform: Matrix::scaling(0.5, 0.5, 0.5),
+        };
+        let s2 = Box::new(s2);
+
+        world.add_shape(s1);
+        world.add_shape(s2);
+
+        let mut mat3 = Material::default();
+        mat3.reflective = 0.5;
+        let plane = Plane {
+            id: 2,
+            material: mat3,
+            transform: Matrix::translation(0.0, -1.0, 0.0)
+        };
+        world.add_shape(Box::new(plane));
+
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let shape = &world.shapes[2];
+
+        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let comps = i.prepare_computations(&r);
+        let color = world.shade_hit(comps, 1);
+        assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
+    }
+
+    #[test]
+    fn color_at_with_mutually_reflective_surfaces() {
+        let mut world = World {
+            light: PointLight::new(Vec4::point(0.0, 0.0, 0.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut mat1 = Material::default();
+        mat1.reflective = 1.0;
+        let lower = Plane {
+            id: 0,
+            transform: Matrix::translation(0.0, -1.0, 0.0),
+            material: mat1
+        };
+        world.add_shape(Box::new(lower));
+
+        let mut mat2 = Material::default();
+        mat2.reflective = 1.0;
+        let higher = Plane {
+            id: 1,
+            transform: Matrix::translation(0.0, 1.0, 0.0),
+            material: mat2
+        };
+        world.add_shape(Box::new(higher));
+
+        let r = Ray::new(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        
+        let _c = world.color_at(&r, 0);
+    }
+    #[test]
+    fn color_at_max_recursion() {
+        let mut world = World::default();
+ 
+        let mut mat3 = Material::default();
+        mat3.reflective = 0.5;
+        let plane = Plane {
+            id: 2,
+            material: mat3,
+            transform: Matrix::translation(0.0, -1.0, 0.0)
+        };
+        world.add_shape(Box::new(plane));
+
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2/2.0, SQRT_2/2.0);
+        let shape = &world.shapes[2];
+
+        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let comps = i.prepare_computations(&r);
+        let color = world.reflected_color(&comps, 0);
+        assert_eq!(color, Color::black());
     }
 }

@@ -11,14 +11,16 @@ pub struct Computations<'a> {
     pub normalv: Vec4,
     pub inside: bool,
     pub over_point: Vec4,
+    pub reflectv: Vec4
 }
 impl<'a> Computations<'a> {
-    pub fn new(object: &'a dyn Shape, point: Vec4, eyev: Vec4, normalv: Vec4) -> Self {
+    pub fn new(object: &'a dyn Shape, point: Vec4, eyev: Vec4, normalv: Vec4, raydir: Vec4) -> Self {
         let (inside, normalv) = if normalv.dot(&eyev) < 0.0 {
             (true, -normalv)
         } else {
             (false, normalv)
         };
+        let reflectv = raydir.reflect(&normalv);
         let over_point = point + normalv * EPSILON;
         Self {
             object,
@@ -27,6 +29,7 @@ impl<'a> Computations<'a> {
             normalv,
             inside,
             over_point,
+            reflectv
         }
     }
     pub fn object(&self) -> &'a dyn Shape {
@@ -58,6 +61,7 @@ impl Intersection<'_> {
             point,
             -ray.direction,
             self.object.normal_at(point),
+            ray.direction
         )
     }
 }
@@ -83,7 +87,9 @@ impl Ord for Intersection<'_> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::Sphere;
+    use std::f64::consts::SQRT_2;
+
+    use crate::{shapes::plane::Plane, Sphere};
 
     use super::*;
 
@@ -132,5 +138,15 @@ pub mod tests {
         assert_eq!(comps.eyev, Vec4::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.inside, true);
         assert_eq!(comps.normalv, Vec4::vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn precompute_reflection_vec() {
+        let s = Plane::new();
+        let r = Ray::from_vec4(Vec4::point(0.0, 1.0, -1.0), Vec4::vector(0.0, -SQRT_2/2.0, SQRT_2/2.0));
+
+        let i = Intersection::new(SQRT_2, &s);
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.reflectv, Vec4::vector(0.0, SQRT_2/2.0, SQRT_2/2.0));
     }
 }

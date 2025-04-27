@@ -8,10 +8,11 @@ pub struct Camera {
     pub pixel_size: f64,
     pub half_width: f64,
     pub half_height: f64,
+    pub reflection_max: usize
 }
 
 impl Camera {
-    pub fn new(hsize: usize, vsize: usize, fov: f64) -> Self {
+    pub fn new(hsize: usize, vsize: usize, fov: f64, reflection_max: usize) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = hsize as f64 / vsize as f64;
         let (half_width, half_height) = if aspect >= 1.0 {
@@ -30,6 +31,7 @@ impl Camera {
             pixel_size,
             half_width,
             half_height,
+            reflection_max
         }
     }
     pub fn set_view(&mut self, from: Vec4, to: Vec4, up: Vec4) {
@@ -70,7 +72,7 @@ impl Camera {
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray, self.reflection_max);
                 image.set_pixel(x, y, color);
             }
         }
@@ -113,21 +115,21 @@ pub mod tests {
     }
     #[test]
     fn center_canvas() {
-        let c = Camera::new(201, 101, PI / 2.0);
+        let c = Camera::new(201, 101, PI / 2.0, 0);
         let r = c.ray_for_pixel(100, 50);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
         assert_eq!(r.direction, Vec4::vector(0.0, 0.0, -1.0));
     }
     #[test]
     fn corner_canvas() {
-        let c = Camera::new(201, 101, PI / 2.0);
+        let c = Camera::new(201, 101, PI / 2.0, 0);
         let r = c.ray_for_pixel(0, 0);
         assert_eq!(r.origin, Vec4::point(0.0, 0.0, 0.0));
         assert_eq!(r.direction, Vec4::vector(0.66519, 0.33259, -0.66851));
     }
     #[test]
     fn corner_canvas_transform() {
-        let mut c = Camera::new(201, 101, PI / 2.0);
+        let mut c = Camera::new(201, 101, PI / 2.0, 0);
         c.set_view_from_matrix(Matrix::rotation_y(PI / 4.0) * Matrix::translation(0.0, -2.0, 5.0));
         let r = c.ray_for_pixel(100, 50);
 
@@ -137,7 +139,7 @@ pub mod tests {
     #[test]
     fn render_func() {
         let w = World::default();
-        let mut c = Camera::new(11, 11, PI / 2.0);
+        let mut c = Camera::new(11, 11, PI / 2.0, 0);
         let from = Vec4::point(0.0, 0.0, -5.0);
         let to = Vec4::point(0.0, 0.0, 0.0);
         let up = Vec4::vector(0.0, 1.0, 0.0);
