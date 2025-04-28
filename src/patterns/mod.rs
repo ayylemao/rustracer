@@ -21,30 +21,24 @@ pub trait Pattern: Debug + Sync + Send {
 }
 
 #[derive(Debug, Clone)]
-pub struct StripePattern {
-    pub colors: Vec<Color>,
+pub struct TestPattern {
     pub transform: Matrix<4, 4>,
 }
 
-impl StripePattern {
-    pub fn new(a: Color, b: Color) -> Self {
-        let mut cs: Vec<Color> = Vec::new();
-        cs.push(a);
-        cs.push(b);
-        StripePattern {
-            colors: cs,
+impl TestPattern {
+    pub fn new() -> Self {
+        TestPattern {
             transform: Matrix::eye(),
         }
     }
 }
 
-impl Pattern for StripePattern {
+impl Pattern for TestPattern {
     fn color_at(&self, point: &Vec4) -> Color {
-        if point.x.floor() % 2.0 == 0.0 {
-            return self.colors[0];
-        } else {
-            return self.colors[1];
-        }
+        Color::new(point.x, point.y, point.z)
+    }
+    fn pattern_at(&self, _object: &dyn Shape, world_point: &Vec4) -> Color {
+        self.color_at(world_point)
     }
     fn set_transformation(&mut self, matrix: Matrix<4, 4>) {
         self.transform = matrix;
@@ -54,20 +48,4 @@ impl Pattern for StripePattern {
     }
 }
 
-#[cfg(test)]
-pub mod tests {
-    use crate::{color::Color, patterns::Pattern, vec4::Vec4};
 
-    use super::StripePattern;
-
-    #[test]
-    fn stripe_pattern() {
-        let pat = StripePattern::new(Color::white(), Color::black());
-        assert_eq!(pat.color_at(&Vec4::point(0.0, 0.0, 0.0)), Color::white());
-        assert_eq!(pat.color_at(&Vec4::point(0.0, 0.0, 1.0)), Color::white());
-        assert_eq!(pat.color_at(&Vec4::point(0.0, 0.0, 2.0)), Color::white());
-        assert_eq!(pat.color_at(&Vec4::point(1.0, 0.0, 0.0)), Color::black());
-        assert_eq!(pat.color_at(&Vec4::point(-0.1, 0.0, 0.0)), Color::black());
-        assert_eq!(pat.color_at(&Vec4::point(-1.0, 0.0, 0.0)), Color::black());
-    }
-}

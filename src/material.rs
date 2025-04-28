@@ -106,7 +106,7 @@ impl Material {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{Sphere, patterns::StripePattern};
+    use crate::{Sphere, patterns::stripe_pattern::StripePattern};
 
     use super::*;
     use std::f64::consts::SQRT_2;

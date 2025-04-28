@@ -13,7 +13,8 @@ pub struct Computations<'a> {
     pub over_point: Vec4,
     pub reflectv: Vec4,
     pub n1: f64,
-    pub n2: f64
+    pub n2: f64,
+    pub under_point: Vec4,
 }
 impl<'a> Computations<'a> {
     pub fn new(
@@ -23,7 +24,7 @@ impl<'a> Computations<'a> {
         normalv: Vec4,
         raydir: Vec4,
         n1: f64,
-        n2: f64
+        n2: f64,
     ) -> Self {
         let (inside, normalv) = if normalv.dot(&eyev) < 0.0 {
             (true, -normalv)
@@ -32,6 +33,7 @@ impl<'a> Computations<'a> {
         };
         let reflectv = raydir.reflect(&normalv);
         let over_point = point + normalv * EPSILON;
+        let under_point = point - normalv * EPSILON;
         Self {
             object,
             point,
@@ -41,7 +43,8 @@ impl<'a> Computations<'a> {
             over_point,
             reflectv,
             n1: n1,
-            n2: n2
+            n2: n2,
+            under_point,
         }
     }
     pub fn object(&self) -> &'a dyn Shape {
@@ -66,7 +69,11 @@ impl Intersection<'_> {
             .filter(|i| i.t >= 0.0)
             .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
     }
-    pub fn prepare_computations<'a>(&self, ray: &Ray, int_list:  &'a [Intersection<'a>]) -> Computations {
+    pub fn prepare_computations<'a>(
+        &self,
+        ray: &Ray,
+        int_list: &'a [Intersection<'a>],
+    ) -> Computations {
         let point = ray.position(self.t);
         let mut comps = Computations::new(
             self.object,
@@ -75,29 +82,31 @@ impl Intersection<'_> {
             self.object.normal_at(point),
             ray.direction,
             0.0,
-            0.0
+            0.0,
         );
-        //let mut container: Vec<&dyn Shape> = Vec::new();
+        let mut container: Vec<&dyn Shape> = Vec::new();
 
-        //for i in int_list {
-        //    if std::ptr::eq(i, self) {
-        //        comps.n1 = match container.last() {
-        //            Some(shape) => shape.material().refractive_index,
-        //            None => 1.0
-        //        };
-        //    }
-        //    match container.iter().position(|x| x.id() == i.object.id()) {
-        //        Some(index) => {container.remove(index);},
-        //        None => { container.push(i.object); }
-        //    }
-        //    if std::ptr::eq(i, self) {
-        //        comps.n2 = match container.last() {
-        //            Some(shape) => shape.material().refractive_index,
-        //            None => 1.0
-        //        };
-        //        break;
-        //    }
-        //}
+        for i in int_list {
+            if std::ptr::eq(i, self) {
+                comps.n1 = container
+                    .last()
+                    .map_or(1.0, |s| s.material().refractive_index);
+            }
+            match container.iter().position(|x| x.id() == i.object.id()) {
+                Some(index) => {
+                    container.remove(index);
+                }
+                None => {
+                    container.push(i.object);
+                }
+            }
+            if std::ptr::eq(i, self) {
+                comps.n2 = container
+                    .last()
+                    .map_or(1.0, |s| s.material().refractive_index);
+                break;
+            }
+        }
         comps
     }
 }

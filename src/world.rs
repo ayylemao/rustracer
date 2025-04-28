@@ -110,6 +110,27 @@ impl World {
         };
         c * comps.object.material().reflective
     }
+    pub fn refracted_color(&self, comps: &Computations, remaining: usize) -> Color {
+        if remaining == 0 {
+            return Color::black()
+        }
+        
+        let transparency = comps.object.material().transparency;
+        if transparency == 0.0 {
+            return Color::black();
+        }
+        let n_ratio = comps.n1 / comps.n2;
+        let cos_i = comps.eyev.dot(&comps.normalv);
+        let sin2_t = n_ratio.powi(2) * (1.0 - cos_i.powi(2));
+        if sin2_t > 1.0 {
+            return Color::black();
+        }
+        let cos_t = (1.0 - sin2_t).sqrt();
+        let direction = comps.normalv * (n_ratio * cos_i - cos_t) - comps.eyev * n_ratio;
+        let refract_ray = Ray::from_vec4(comps.under_point, direction);
+
+        self.color_at(&refract_ray, remaining - 1) * transparency
+    }
 }
 
 #[cfg(test)]
@@ -117,11 +138,13 @@ pub mod tests {
     use std::f64::consts::SQRT_2;
     use std::sync::Arc;
 
+    use crate::patterns::TestPattern;
     use crate::Sphere;
     use crate::color::Color;
     use crate::intersection::Intersection;
     use crate::light::PointLight;
     use crate::material::Material;
+    use crate::math::EPSILON;
     use crate::matrix::Matrix;
     use crate::ray::Ray;
     use crate::shapes::Shape;
@@ -397,7 +420,7 @@ pub mod tests {
     }
 
     #[test]
-    fn transluscence() {
+    fn transluscence_1() {
         let mut a = Sphere::glas(1.5);
         a.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
         let mut b = Sphere::glas(2.0);
@@ -426,7 +449,14 @@ pub mod tests {
             Intersection::new(5.25, c.as_ref()),
             Intersection::new(6.0, a.as_ref()),
         ];
-        let expected = [[1.0, 1.5], [1.5, 2.0], [2.0, 2.5], [2.5, 2.5], [2.5, 1.5], [1.5, 1.0]];
+        let expected = [
+            [1.0, 1.5],
+            [1.5, 2.0],
+            [2.0, 2.5],
+            [2.5, 2.5],
+            [2.5, 1.5],
+            [1.5, 1.0],
+        ];
         let mut index = 0;
         for i in &xs {
             let comps = i.prepare_computations(&r, &xs);
@@ -434,5 +464,171 @@ pub mod tests {
             assert_eq!(comps.n2, expected[index][1]);
             index += 1;
         }
+    }
+    #[test]
+    fn transluscence_2() {
+        let mut a = Sphere::glas(1.5);
+        a.set_transformation(Matrix::translation(0.0, 0.0, 1.0));
+
+        let mut world = World::new(PointLight::new(
+            Vec4::point(0.0, 0.0, 0.0),
+            Color::new(1.0, 1.0, 1.0),
+        ));
+        world.add_shape(Arc::new(a));
+
+        let r = Ray::from_vec4(Vec4::point(0.0, 0.0, -5.0), Vec4::vector(0.0, 0.0, 1.0));
+
+        let a = &world.shapes[0];
+
+        let i = Intersection::new(5.0, a.as_ref());
+        let xs = world.intersect(&r);
+        let comps = i.prepare_computations(&r, &xs);
+        assert!(comps.under_point.z > EPSILON / 2.0);
+        assert!(comps.point.z < comps.under_point.z);
+    }
+
+    #[test]
+    fn transluscence_3() {
+        let w = World::default();
+        let shape = &w.shapes[0];
+        let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
+
+        let xs = vec![
+            Intersection::new(4.0, shape.as_ref()),
+            Intersection::new(6.0, shape.as_ref()),
+        ];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+        assert_eq!(c, Color::black());
+    }
+    #[test]
+    fn transluscence_4() {
+        let mut w = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut s1 = Sphere::new();
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+        mat1.transparency = 1.0;
+        mat1.refractive_index = 1.5;
+        s1.set_material(mat1);
+        let s1 = Arc::new(s1);
+
+        let mut s2 = Sphere::new();
+        s2.set_material(Material::default());
+        s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        let s2 = Arc::new(s2);
+
+        w.add_shape(s1);
+        w.add_shape(s2);
+
+        let shape = &w.shapes[0];
+
+        let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
+
+        let xs = vec![
+            Intersection::new(4.0, shape.as_ref()),
+            Intersection::new(6.0, shape.as_ref()),
+        ];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 0);
+        assert_eq!(c, Color::black());
+    }
+
+    #[test]
+    fn transluscence_5() {
+        let mut w = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut s1 = Sphere::new();
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+        mat1.transparency = 1.0;
+        mat1.refractive_index = 1.5;
+        s1.set_material(mat1);
+        let s1 = Arc::new(s1);
+
+        let mut s2 = Sphere::new();
+        s2.set_material(Material::default());
+        s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        let s2 = Arc::new(s2);
+
+        w.add_shape(s1);
+        w.add_shape(s2);
+
+        let shape = &w.shapes[0];
+
+        let r = Ray::new(0.0, 0.0, SQRT_2/2.0, 0.0, 1.0, 0.0);
+
+        let xs = vec![
+            Intersection::new(-SQRT_2/2.0, shape.as_ref()),
+            Intersection::new(SQRT_2/2.0, shape.as_ref()),
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+        assert_eq!(c, Color::black());
+    }
+    #[test]
+    fn transluscence_6() {
+        let mut w = World {
+            light: PointLight::new(Vec4::point(-10.0, 10.0, -10.0), Color::white()),
+            shapes: Vec::new(),
+        };
+
+        let mut s1 = Sphere::new();
+        let mut mat1 = Material::default();
+        mat1.set_color(Color {
+            r: 0.8,
+            g: 1.0,
+            b: 0.6,
+        });
+        mat1.diffuse = 0.7;
+        mat1.specular = 0.2;
+        mat1.ambient = 1.0;
+        mat1.set_pattern(TestPattern::new());
+        s1.set_material(mat1);
+        let s1 = Arc::new(s1);
+
+        let mut s2 = Sphere::new();
+        let mut mat2 = Material::default();
+        mat2.transparency = 1.0;
+        mat2.refractive_index = 1.5;
+        s2.set_material(mat2);
+        s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        let s2 = Arc::new(s2);
+
+        w.add_shape(s1);
+        w.add_shape(s2);
+
+        let a = &w.shapes[0];
+        let b = &w.shapes[1];
+
+        let r = Ray::new(0.0, 0.0, 0.1, 0.0, 1.0, 0.0);
+
+        let xs = vec![
+            Intersection::new(-0.9899, a.as_ref()),
+            Intersection::new(-0.4899, b.as_ref()),
+            Intersection::new(0.4899, b.as_ref()),
+            Intersection::new(0.9899, a.as_ref()),
+        ];
+        let comps = xs[2].prepare_computations(&r, &xs);
+        let c = w.refracted_color(&comps, 5);
+        assert_eq!(c, Color::new(0.0, 0.9988, 0.04725));
     }
 }
