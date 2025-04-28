@@ -33,4 +33,5 @@ pub trait Shape: Debug + Sync + Send {
     fn material(&self) -> &Material;
     fn set_transformation(&mut self, mat: SqMatrix<4>);
     fn set_material(&mut self, material: Material);
+    fn id(&self) -> usize;
 }

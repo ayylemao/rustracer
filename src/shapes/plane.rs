@@ -66,6 +66,10 @@ impl Shape for Plane {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
+
+    fn id(&self) -> usize {
+        self.id
+    }
 }
 
 #[cfg(test)]

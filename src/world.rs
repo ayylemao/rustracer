@@ -80,7 +80,7 @@ impl World {
     pub fn color_at(&self, ray: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(ray);
         if let Some(hit) = Intersection::hit(&xs) {
-            let comps = hit.prepare_computations(ray);
+            let comps = hit.prepare_computations(ray, &Vec::<Intersection>::new());
             self.shade_hit(comps, remaining)
         } else {
             Color::black()
@@ -124,6 +124,7 @@ pub mod tests {
     use crate::material::Material;
     use crate::matrix::Matrix;
     use crate::ray::Ray;
+    use crate::shapes::Shape;
     use crate::shapes::plane::Plane;
     use crate::vec4::Vec4;
 
@@ -148,7 +149,7 @@ pub mod tests {
 
         let shape = &*w.shapes[0]; // first object
         let i = Intersection::new(4.0, shape);
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let c = w.shade_hit(comps, 0);
 
         let expected = Color::new(0.38066, 0.47583, 0.2855);
@@ -163,7 +164,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let shape = &*w.shapes[1];
         let i = Intersection::new(0.5, shape);
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let c = w.shade_hit(comps, 0);
 
         let expected = Color::new(0.90498, 0.90498, 0.90498);
@@ -235,7 +236,7 @@ pub mod tests {
         let shape = &world.shapes[1];
 
         let i = Intersection::new(1.0, shape.as_ref());
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 3);
         assert_eq!(color, Color::black());
     }
@@ -287,7 +288,7 @@ pub mod tests {
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 3);
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
@@ -339,7 +340,7 @@ pub mod tests {
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.shade_hit(comps, 1);
         assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
     }
@@ -390,8 +391,48 @@ pub mod tests {
         let shape = &world.shapes[2];
 
         let i = Intersection::new(SQRT_2, shape.as_ref());
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 0);
         assert_eq!(color, Color::black());
+    }
+
+    #[test]
+    fn transluscence() {
+        let mut a = Sphere::glas(1.5);
+        a.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
+        let mut b = Sphere::glas(2.0);
+        b.set_transformation(Matrix::translation(0.0, 0.0, -0.25));
+        let mut c = Sphere::glas(2.5);
+        c.set_transformation(Matrix::translation(0.0, 0.0, 0.25));
+
+        let mut world = World::new(PointLight::new(
+            Vec4::point(0.0, 0.0, 0.0),
+            Color::new(1.0, 1.0, 1.0),
+        ));
+        world.add_shape(Arc::new(a));
+        world.add_shape(Arc::new(b));
+        world.add_shape(Arc::new(c));
+
+        let r = Ray::from_vec4(Vec4::point(0.0, 0.0, -4.0), Vec4::vector(0.0, 0.0, 1.0));
+
+        let a = &world.shapes[0];
+        let b = &world.shapes[1];
+        let c = &world.shapes[2];
+        let xs = vec![
+            Intersection::new(2.0, a.as_ref()),
+            Intersection::new(2.75, b.as_ref()),
+            Intersection::new(3.25, c.as_ref()),
+            Intersection::new(4.75, b.as_ref()),
+            Intersection::new(5.25, c.as_ref()),
+            Intersection::new(6.0, a.as_ref()),
+        ];
+        let expected = [[1.0, 1.5], [1.5, 2.0], [2.0, 2.5], [2.5, 2.5], [2.5, 1.5], [1.5, 1.0]];
+        let mut index = 0;
+        for i in &xs {
+            let comps = i.prepare_computations(&r, &xs);
+            assert_eq!(comps.n1, expected[index][0]);
+            assert_eq!(comps.n2, expected[index][1]);
+            index += 1;
+        }
     }
 }

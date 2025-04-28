@@ -11,6 +11,8 @@ pub struct Material {
     pub shininess: f64,
     pub pattern: Option<Arc<dyn Pattern + Send + Sync>>,
     pub reflective: f64,
+    pub transparency: f64,
+    pub refractive_index: f64,
 }
 
 impl Material {
@@ -23,6 +25,8 @@ impl Material {
             shininess: 200.0,
             pattern: None,
             reflective: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
     pub fn new(
@@ -41,8 +45,17 @@ impl Material {
             shininess,
             pattern: None,
             reflective,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
+    pub fn glas() -> Self {
+        let mut m = Material::default();
+        m.transparency = 1.0;
+        m.refractive_index = 1.5;
+        m
+    }
+
     pub fn set_color(&mut self, color: Color) {
         self.color = color;
     }

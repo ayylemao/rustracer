@@ -29,6 +29,16 @@ impl Sphere {
             material: Material::default(),
         }
     }
+    pub fn glas(refractive_index: f64) -> Sphere {
+        let id = next_shape_id();
+        let mut m1 = Material::glas();
+        m1.refractive_index = refractive_index;
+        Sphere {
+            id,
+            transform: Matrix::eye(),
+            material: m1,
+        }
+    }
 }
 
 impl Shape for Sphere {
@@ -68,6 +78,10 @@ impl Shape for Sphere {
 
     fn set_material(&mut self, material: Material) {
         self.material = material;
+    }
+
+    fn id(&self) -> usize {
+        self.id
     }
 }
 

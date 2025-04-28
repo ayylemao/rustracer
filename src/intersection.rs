@@ -12,6 +12,8 @@ pub struct Computations<'a> {
     pub inside: bool,
     pub over_point: Vec4,
     pub reflectv: Vec4,
+    pub n1: f64,
+    pub n2: f64
 }
 impl<'a> Computations<'a> {
     pub fn new(
@@ -20,6 +22,8 @@ impl<'a> Computations<'a> {
         eyev: Vec4,
         normalv: Vec4,
         raydir: Vec4,
+        n1: f64,
+        n2: f64
     ) -> Self {
         let (inside, normalv) = if normalv.dot(&eyev) < 0.0 {
             (true, -normalv)
@@ -36,6 +40,8 @@ impl<'a> Computations<'a> {
             inside,
             over_point,
             reflectv,
+            n1: n1,
+            n2: n2
         }
     }
     pub fn object(&self) -> &'a dyn Shape {
@@ -60,15 +66,39 @@ impl Intersection<'_> {
             .filter(|i| i.t >= 0.0)
             .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
     }
-    pub fn prepare_computations(&self, ray: &Ray) -> Computations {
+    pub fn prepare_computations<'a>(&self, ray: &Ray, int_list:  &'a [Intersection<'a>]) -> Computations {
         let point = ray.position(self.t);
-        Computations::new(
+        let mut comps = Computations::new(
             self.object,
             point,
             -ray.direction,
             self.object.normal_at(point),
             ray.direction,
-        )
+            0.0,
+            0.0
+        );
+        //let mut container: Vec<&dyn Shape> = Vec::new();
+
+        //for i in int_list {
+        //    if std::ptr::eq(i, self) {
+        //        comps.n1 = match container.last() {
+        //            Some(shape) => shape.material().refractive_index,
+        //            None => 1.0
+        //        };
+        //    }
+        //    match container.iter().position(|x| x.id() == i.object.id()) {
+        //        Some(index) => {container.remove(index);},
+        //        None => { container.push(i.object); }
+        //    }
+        //    if std::ptr::eq(i, self) {
+        //        comps.n2 = match container.last() {
+        //            Some(shape) => shape.material().refractive_index,
+        //            None => 1.0
+        //        };
+        //        break;
+        //    }
+        //}
+        comps
     }
 }
 impl PartialEq for Intersection<'_> {
@@ -133,13 +163,13 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
         let i = Intersection::new(4.0, &s);
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(comps.inside, false);
 
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
         let i = Intersection::new(1.0, &s);
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(comps.point, Vec4::point(0.0, 0.0, 1.0));
         assert_eq!(comps.eyev, Vec4::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.inside, true);
@@ -155,7 +185,7 @@ pub mod tests {
         );
 
         let i = Intersection::new(SQRT_2, &s);
-        let comps = i.prepare_computations(&r);
+        let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(
             comps.reflectv,
             Vec4::vector(0.0, SQRT_2 / 2.0, SQRT_2 / 2.0)
