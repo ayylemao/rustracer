@@ -11,77 +11,76 @@ use raytracer::{
 };
 use std::{f64::consts::PI, sync::Arc};
 
-const WIDTH: usize = 5000;
-const HEIGHT: usize = 2500;
+const WIDTH: usize = 1600;
+const HEIGHT: usize = 800;
 fn main() {
-    // shapes
+    // === Floor ===
     let mut floor = Plane::new();
-    floor.material.set_color(Color::new(0.0, 0.9, 0.9));
-    let mut pat = Gradient::new(Color::magenta(), Color::cyan());
-    pat.set_transformation(Matrix::translation(10.0, 0.0, 0.0) * Matrix::scaling(15.0, 1.0, 1.0));
-    floor.material.set_pattern(pat);
-    floor.material.specular = 5.0;
-    floor.material.reflective = 0.6;
+    let floor_pat = Checker::new(Color::dark_gray(), Color::light_gray());
+    //floor_pat.set_transformation(Matrix::scaling(0.25, 0.25, 0.25));
+    floor.material.set_pattern(floor_pat);
+    floor.material.specular = 0.5;
+    floor.material.reflective = 0.8;
 
-    //let mut back = Plane::new();
-    //back.material.set_color(Color::cyan());
-    //back.set_transformation(Matrix::translation(0.0, 0.0, 10.0) * Matrix::rotation_x(PI / 2.0));
-    //back.material.specular = 0.0;
+    // === Back Wall ===
+    let mut wall = Plane::new();
+    let mut wall_pat = Checker::new(Color::black(), Color::white());
+    wall_pat.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+    wall.material.set_pattern(wall_pat);
+    wall.set_transformation(Matrix::translation(0.0, 0.0, 10.0) * Matrix::rotation_x(PI / 2.0));
+    wall.material.specular = 0.0;
 
-    //let mut midwall = Plane::new();
-    //midwall.material.set_color(Color::new(0.9, 0.9, 0.9));
-    //midwall.set_transformation(
-    //    Matrix::rotation_y(PI / 2.0)
-    //        * Matrix::translation(0.0, 0.0, 10.0)
-    //        * Matrix::rotation_x(PI / 2.0),
-    //);
-    //midwall.material.specular = 0.0;
+    // === Center Sphere ===
+    let mut center = Sphere::new();
+    center.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
+    center.material.diffuse = 0.6;
+    center.material.specular = 0.5;
+    center.material.reflective = 0.8;
+    center.material.set_color(Color::yellow());
+    //let mut stripe_pat = StripePattern::new(Color::magenta(), Color::white());
+    //stripe_pat.set_transformation(Matrix::rotation_y(PI / 4.0) * Matrix::scaling(0.2, 0.2, 0.2));
+    //center.material.set_pattern(stripe_pat);
 
-    let mut middle = Sphere::new();
-    middle.set_transformation(Matrix::translation(-0.5, 1.0, 0.5));
-    middle.material.set_color(Color::new(0.1, 1.0, 0.5));
-    middle.material.diffuse = 0.7;
-    middle.material.specular = 0.3;
-    middle.material.reflective = 0.5;
-    let pat = Checker::new(Color::white(), Color::green());
-    middle.material.set_pattern(pat);
-
-    let mut right = Sphere::new();
-    right.set_transformation(Matrix::translation(1.5, 0.5, -0.5) * Matrix::scaling(0.5, 0.5, 0.5));
-    right.material.set_color(Color::new(0.5, 1.0, 0.1));
-    right.material.diffuse = 0.7;
-    right.material.specular = 0.3;
-    right.material.reflective = 0.5;
-
+    // === Left Gradient Sphere ===
     let mut left = Sphere::new();
     left.set_transformation(
-        Matrix::translation(-1.5, 0.33, -0.75) * Matrix::scaling(0.33, 0.33, 0.33),
+        Matrix::translation(-0.8, 0.33, -1.5) * Matrix::scaling(0.33, 0.33, 0.33),
     );
-    left.material.set_color(Color::new(1.0, 0.8, 0.1));
-    left.material.diffuse = 0.7;
-    left.material.specular = 0.3;
-    left.material.reflective = 0.5;
+    let grad_left = Checker::new(Color::cyan(), Color::blue());
+    //grad_left.set_transformation(Matrix::scaling(3.0, 2.0, 2.0));
+    left.material.set_pattern(grad_left);
+    left.material.specular = 0.2;
+    left.material.reflective = 0.8;
 
-    // World Setup
+    // === Right Gradient Sphere ===
+    let mut right = Sphere::new();
+    right.set_transformation(Matrix::translation(1.5, 0.5, -1.0) * Matrix::scaling(0.5, 0.5, 0.5));
+    let mut grad_right = Gradient::new(Color::orange(), Color::red());
+    grad_right.set_transformation(Matrix::scaling(2.0, 1.0, 1.0));
+    right.material.set_pattern(grad_right);
+    right.material.specular = 0.2;
+    right.material.reflective = 0.8;
+
+    // === World ===
     let mut world = World::new(PointLight::new(
-        Vec4::point(-10.0, 3.0, 0.0),
+        Vec4::point(-10.0, 10.0, -10.0),
         Color::white(),
     ));
 
     world.add_shape(Arc::new(floor));
-    world.add_shape(Arc::new(middle));
+    //world.add_shape(Arc::new(wall));
+    world.add_shape(Arc::new(center));
     world.add_shape(Arc::new(left));
     world.add_shape(Arc::new(right));
-    //world.add_shape(Box::new(back));
-    //world.add_shape(Box::new(midwall));
 
-    let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0, 5, 8);
+    // === Camera ===
+    let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0, 5, 16);
     camera.set_view(
-        Vec4::point(-5.0, 2.5, -5.0),
-        Vec4::point(1.0, 1.0, 0.0),
+        Vec4::point(0.0, 2.0, -6.0),
+        Vec4::point(0.0, 1.0, 0.0),
         Vec4::vector(0.0, 1.0, 0.0),
     );
 
     let image = camera.render(&world);
-    image.save("image.png");
+    image.save("image_test.png");
 }

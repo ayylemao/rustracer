@@ -19,7 +19,7 @@ impl Checker {
 
 impl Pattern for Checker {
     fn color_at(&self, point: &crate::vec4::Vec4) -> Color {
-        let sum = point.x.floor() as i32 + point.y.floor() as i32 + point.z.floor() as i32;
+        let sum = point.x.round() as i32 + point.y.round() as i32 + point.z.round() as i32;
         if sum % 2 == 0 {
             return self.colors[0];
         }
