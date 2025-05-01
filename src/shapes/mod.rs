@@ -5,6 +5,7 @@ use crate::ray::Ray;
 use crate::vec4::Vec4;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 pub mod group;
 pub mod plane;
@@ -35,4 +36,5 @@ pub trait Shape: Debug + Sync + Send {
     fn set_transformation(&mut self, mat: SqMatrix<4>);
     fn set_material(&mut self, material: Material);
     fn id(&self) -> usize;
+    fn set_parent(&mut self, parent: Arc<dyn Shape>);
 }
