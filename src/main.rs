@@ -33,9 +33,10 @@ fn main() {
     // === Center Sphere ===
     let mut center = Sphere::new();
     center.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
-    center.material.diffuse = 0.6;
+    center.material.ambient = 0.2;
+    center.material.diffuse = 0.2;
     center.material.specular = 0.5;
-    center.material.reflective = 0.8;
+    center.material.reflective = 0.9;
     center.material.set_color(Color::yellow());
     //let mut stripe_pat = StripePattern::new(Color::magenta(), Color::white());
     //stripe_pat.set_transformation(Matrix::rotation_y(PI / 4.0) * Matrix::scaling(0.2, 0.2, 0.2));

@@ -47,5 +47,3 @@ impl Pattern for TestPattern {
         return &self.transform;
     }
 }
-
-

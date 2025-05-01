@@ -75,12 +75,20 @@ impl World {
             in_shadow,
         );
         let reflected = self.reflected_color(&comps, remaining);
-        surface + reflected
+        let refracted = self.refracted_color(&comps, remaining);
+
+        let mat = comps.object().material();
+        if mat.reflective > 0.0 && mat.transparency > 0.0 {
+            let reflectance = comps.schlick();
+            return surface + reflected * reflectance + refracted * (1.0 - reflectance);
+        }
+
+        surface + reflected + refracted
     }
     pub fn color_at(&self, ray: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(ray);
         if let Some(hit) = Intersection::hit(&xs) {
-            let comps = hit.prepare_computations(ray, &Vec::<Intersection>::new());
+            let comps = hit.prepare_computations(ray, &xs);
             self.shade_hit(comps, remaining)
         } else {
             Color::black()
@@ -112,9 +120,9 @@ impl World {
     }
     pub fn refracted_color(&self, comps: &Computations, remaining: usize) -> Color {
         if remaining == 0 {
-            return Color::black()
+            return Color::black();
         }
-        
+
         let transparency = comps.object.material().transparency;
         if transparency == 0.0 {
             return Color::black();
@@ -138,14 +146,14 @@ pub mod tests {
     use std::f64::consts::SQRT_2;
     use std::sync::Arc;
 
-    use crate::patterns::TestPattern;
     use crate::Sphere;
     use crate::color::Color;
     use crate::intersection::Intersection;
     use crate::light::PointLight;
     use crate::material::Material;
-    use crate::math::EPSILON;
+    use crate::math::{ApproxEq, EPSILON};
     use crate::matrix::Matrix;
+    use crate::patterns::TestPattern;
     use crate::ray::Ray;
     use crate::shapes::Shape;
     use crate::shapes::plane::Plane;
@@ -574,11 +582,11 @@ pub mod tests {
 
         let shape = &w.shapes[0];
 
-        let r = Ray::new(0.0, 0.0, SQRT_2/2.0, 0.0, 1.0, 0.0);
+        let r = Ray::new(0.0, 0.0, SQRT_2 / 2.0, 0.0, 1.0, 0.0);
 
         let xs = vec![
-            Intersection::new(-SQRT_2/2.0, shape.as_ref()),
-            Intersection::new(SQRT_2/2.0, shape.as_ref()),
+            Intersection::new(-SQRT_2 / 2.0, shape.as_ref()),
+            Intersection::new(SQRT_2 / 2.0, shape.as_ref()),
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 5);
@@ -630,5 +638,111 @@ pub mod tests {
         let comps = xs[2].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 5);
         assert_eq!(c, Color::new(0.0, 0.9988, 0.04725));
+    }
+
+    #[test]
+    fn transluscence_7() {
+        let mut w = World::default();
+
+        let mut floor = Plane::new();
+        floor.set_transformation(Matrix::translation(0.0, -1.0, 0.0));
+        let mut mat = Material::default();
+        mat.transparency = 0.5;
+        mat.refractive_index = 1.5;
+        floor.set_material(mat);
+        w.add_shape(Arc::new(floor));
+
+        let mut ball = Sphere::new();
+        let mut mat = Material::default();
+        mat.color = Color::new(1.0, 0.0, 0.0);
+        mat.ambient = 0.5;
+        ball.set_material(mat);
+        ball.set_transformation(Matrix::translation(0.0, -3.5, -0.5));
+        w.add_shape(Arc::new(ball));
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
+        let floor = w.shapes[2].as_ref();
+        let xs = vec![Intersection::new(SQRT_2, floor)];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let color = w.shade_hit(comps, 5);
+        assert_eq!(color, Color::new(0.93642, 0.68642, 0.68642));
+    }
+
+    #[test]
+    fn fresnel1() {
+        let shape = Sphere::glas(1.5);
+        let r = Ray::new(0.0, 0.0, SQRT_2 / 2.0, 0.0, 1.0, 0.0);
+        let mut w = World::default();
+        w.shapes.remove(0);
+        w.shapes.remove(0);
+        w.add_shape(Arc::new(shape));
+        let shape = w.shapes[0].as_ref();
+        let xs = vec![
+            Intersection::new(-SQRT_2 / 2.0, shape),
+            Intersection::new(SQRT_2 / 2.0, shape),
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert_eq!(reflectance, 1.0);
+    }
+    #[test]
+    fn fresnel2() {
+        let shape = Sphere::glas(1.5);
+        let r = Ray::new(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let mut w = World::default();
+        w.shapes.remove(0);
+        w.shapes.remove(0);
+        w.add_shape(Arc::new(shape));
+        let shape = w.shapes[0].as_ref();
+        let xs = vec![
+            Intersection::new(-1.0, shape),
+            Intersection::new(1.0, shape),
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert!(reflectance.approx_eq(&0.04));
+    }
+    #[test]
+    fn fresnel3() {
+        let shape = Sphere::glas(1.5);
+        let r = Ray::new(0.0, 0.99, -2.0, 0.0, 0.0, 1.0);
+        let mut w = World::default();
+        w.shapes.remove(0);
+        w.shapes.remove(0);
+        w.add_shape(Arc::new(shape));
+        let shape = w.shapes[0].as_ref();
+        let xs = vec![Intersection::new(1.8589, shape)];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert!(reflectance.approx_eq(&0.48873));
+    }
+
+    #[test]
+    fn fresnel4() {
+        let mut w = World::default();
+
+        let mut floor = Plane::new();
+        floor.set_transformation(Matrix::translation(0.0, -1.0, 0.0));
+        let mut mat = Material::default();
+        mat.transparency = 0.5;
+        mat.refractive_index = 1.5;
+        mat.reflective = 0.5;
+        floor.set_material(mat);
+        w.add_shape(Arc::new(floor));
+
+        let mut ball = Sphere::new();
+        let mut mat = Material::default();
+        mat.color = Color::new(1.0, 0.0, 0.0);
+        mat.ambient = 0.5;
+        ball.set_material(mat);
+        ball.set_transformation(Matrix::translation(0.0, -3.5, -0.5));
+        w.add_shape(Arc::new(ball));
+        let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
+        let floor = w.shapes[2].as_ref();
+        let xs = vec![Intersection::new(SQRT_2, floor)];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let color = w.shade_hit(comps, 5);
+        assert!(color.r.approx_eq(&0.93391), "red channel off");
+        assert!(color.g.approx_eq(&0.69643), "green channel off");
+        assert!(color.b.approx_eq(&0.69243), "blue channel off");
     }
 }

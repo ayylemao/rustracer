@@ -6,6 +6,7 @@ use crate::vec4::Vec4;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+pub mod group;
 pub mod plane;
 pub mod sphere;
 
