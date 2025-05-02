@@ -72,7 +72,7 @@ fn main() {
     g.add_child(Arc::new(right));
     g.add_child(Arc::new(left));
 
-    g.set_transformation(Matrix::rotation_y(PI));
+    g.set_transformation(Matrix::rotation_y(PI / 8.0));
 
     world.add_shape(Arc::new(floor));
     world.add_shape(Arc::new(g));
@@ -80,7 +80,7 @@ fn main() {
     // === Camera ===
     let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0, 5, 16);
     camera.set_view(
-        Vec4::point(0.0, 5.0, 1.0),
+        Vec4::point(0.0, 6.0, -12.0),
         Vec4::point(0.0, 1.0, 0.0),
         Vec4::vector(0.0, 1.0, 0.0),
     );

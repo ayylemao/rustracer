@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 pub mod group;
 pub mod plane;
 pub mod sphere;
+pub mod triangle;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
