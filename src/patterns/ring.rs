@@ -6,6 +6,7 @@ use super::Pattern;
 pub struct Ring {
     pub colors: [Color; 2],
     pub transform: Matrix<4, 4>,
+    pub inverse: Matrix<4, 4>,
 }
 
 impl Ring {
@@ -13,6 +14,7 @@ impl Ring {
         Ring {
             colors: [a, b],
             transform: Matrix::eye(),
+            inverse: Matrix::eye(),
         }
     }
 }
@@ -27,11 +29,16 @@ impl Pattern for Ring {
     }
 
     fn set_transformation(&mut self, matrix: Matrix<4, 4>) {
-        self.transform = matrix;
+        self.transform = matrix.clone();
+        self.inverse = matrix.inverse()
     }
 
     fn transform(&self) -> &Matrix<4, 4> {
         &self.transform
+    }
+
+    fn inverse(&self) -> &Matrix<4, 4> {
+        &self.inverse
     }
 }
 

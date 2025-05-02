@@ -9,6 +9,7 @@ pub mod matrix;
 pub mod ray;
 pub mod shapes;
 pub use shapes::sphere::Sphere;
+pub mod obj_parser;
 pub mod patterns;
 pub mod transform;
 pub mod vec4;

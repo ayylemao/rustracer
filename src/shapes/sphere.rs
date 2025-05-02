@@ -10,6 +10,7 @@ pub struct Sphere {
     pub id: usize,
     pub transform: SqMatrix<4>,
     pub material: Material,
+    pub inverse: SqMatrix<4>,
 }
 
 impl Sphere {
@@ -17,16 +18,18 @@ impl Sphere {
         let id = next_shape_id();
         Sphere {
             id,
-            transform: Matrix::<4, 4>::eye(),
+            transform: Matrix::eye(),
             material: Material::default(),
+            inverse: Matrix::eye(),
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
         let id = next_shape_id();
         Sphere {
             id,
-            transform: mat,
+            transform: mat.clone(),
             material: Material::default(),
+            inverse: mat.inverse(),
         }
     }
     pub fn glas(refractive_index: f64) -> Sphere {
@@ -37,6 +40,7 @@ impl Sphere {
             id,
             transform: Matrix::eye(),
             material: m1,
+            inverse: Matrix::eye(),
         }
     }
 }
@@ -73,7 +77,8 @@ impl Shape for Sphere {
     }
 
     fn set_transformation(&mut self, mat: Matrix<4, 4>) {
-        self.transform = mat;
+        self.transform = mat.clone();
+        self.inverse = mat.inverse();
     }
 
     fn set_material(&mut self, material: Material) {
@@ -82,6 +87,10 @@ impl Shape for Sphere {
 
     fn id(&self) -> usize {
         self.id
+    }
+
+    fn inverse(&self) -> &Matrix<4, 4> {
+        &self.inverse
     }
 }
 

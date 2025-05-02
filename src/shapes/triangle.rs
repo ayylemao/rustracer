@@ -18,6 +18,7 @@ pub struct Triangle {
     pub e1: Vec4,
     pub e2: Vec4,
     pub normal: Vec4,
+    pub inverse: SqMatrix<4>,
 }
 
 impl Triangle {
@@ -35,6 +36,7 @@ impl Triangle {
             e1,
             e2,
             normal,
+            inverse: Matrix::eye(),
         }
     }
 }
@@ -88,11 +90,16 @@ impl Shape for Triangle {
     }
 
     fn set_transformation(&mut self, mat: SqMatrix<4>) {
-        self.transform = mat;
+        self.transform = mat.clone();
+        self.inverse = mat.inverse();
     }
 
     fn transform(&self) -> &SqMatrix<4> {
         &self.transform
+    }
+
+    fn inverse(&self) -> &Matrix<4, 4> {
+        &self.inverse
     }
 }
 

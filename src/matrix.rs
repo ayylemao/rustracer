@@ -217,16 +217,16 @@ impl<const N: usize> Mul for Matrix<N, N> {
 
 impl<'a, 'b> Mul<&'b Vec4> for &'a Matrix<4, 4> {
     type Output = Vec4;
-    fn mul(self, rhs: &'b Vec4) -> Self::Output {
-        let components = [rhs.x, rhs.y, rhs.z, rhs.w];
-        let mut result = [0.0; 4];
 
-        for row in 0..4 {
-            for col in 0..4 {
-                result[row] += self[(row, col)] * components[col];
-            }
-        }
-        Vec4::from_array(result)
+    fn mul(self, rhs: &'b Vec4) -> Vec4 {
+        let d = &self.data;
+
+        Vec4::new(
+            d[0] * rhs.x + d[1] * rhs.y + d[2] * rhs.z + d[3] * rhs.w,
+            d[4] * rhs.x + d[5] * rhs.y + d[6] * rhs.z + d[7] * rhs.w,
+            d[8] * rhs.x + d[9] * rhs.y + d[10] * rhs.z + d[11] * rhs.w,
+            d[12] * rhs.x + d[13] * rhs.y + d[14] * rhs.z + d[15] * rhs.w,
+        )
     }
 }
 

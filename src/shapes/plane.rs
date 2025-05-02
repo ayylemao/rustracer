@@ -12,6 +12,7 @@ pub struct Plane {
     pub id: usize,
     pub transform: SqMatrix<4>,
     pub material: Material,
+    pub inverse: SqMatrix<4>,
 }
 
 impl Plane {
@@ -19,16 +20,18 @@ impl Plane {
         let id = next_shape_id();
         Plane {
             id,
-            transform: Matrix::<4, 4>::eye(),
+            transform: Matrix::eye(),
             material: Material::default(),
+            inverse: Matrix::eye(),
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
         let id = next_shape_id();
         Plane {
             id,
-            transform: mat,
+            transform: mat.clone(),
             material: Material::default(),
+            inverse: mat.inverse(),
         }
     }
 }
@@ -60,7 +63,8 @@ impl Shape for Plane {
     }
 
     fn set_transformation(&mut self, mat: SqMatrix<4>) {
-        self.transform = mat;
+        self.transform = mat.clone();
+        self.inverse = mat.inverse();
     }
 
     fn set_material(&mut self, material: Material) {
@@ -69,6 +73,10 @@ impl Shape for Plane {
 
     fn id(&self) -> usize {
         self.id
+    }
+
+    fn inverse(&self) -> &Matrix<4, 4> {
+        &self.inverse
     }
 }
 

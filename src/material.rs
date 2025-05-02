@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{color::Color, light::PointLight, patterns::Pattern, shapes::Shape, vec4::Vec4};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Material {
     pub color: Color,
     pub ambient: f64,

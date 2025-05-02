@@ -1,4 +1,6 @@
+use crate::matrix::SqMatrix;
 use crate::{canvas::Canvas, color::Color, matrix::Matrix, ray::Ray, vec4::Vec4, world::World};
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::ThreadPoolBuilder;
 use rayon::prelude::*;
 
@@ -12,6 +14,7 @@ pub struct Camera {
     pub half_height: f64,
     pub reflection_max: usize,
     pub max_threads: usize,
+    pub inverse: SqMatrix<4>,
 }
 
 impl Camera {
@@ -42,13 +45,16 @@ impl Camera {
             half_height,
             reflection_max,
             max_threads,
+            inverse: Matrix::eye(),
         }
     }
     pub fn set_view(&mut self, from: Vec4, to: Vec4, up: Vec4) {
         self.transform = Camera::view_transform(from, to, up);
+        self.inverse = self.transform.inverse();
     }
     pub fn set_view_from_matrix(&mut self, mat: Matrix<4, 4>) {
-        self.transform = mat;
+        self.transform = mat.clone();
+        self.inverse = mat.inverse();
     }
     pub fn view_transform(from: Vec4, to: Vec4, up: Vec4) -> Matrix<4, 4> {
         let forward = (to - from).norm();
@@ -71,14 +77,24 @@ impl Camera {
 
         let world_x = self.half_width - xoffset;
         let world_y = self.half_height - yoffset;
-
-        let pixel = self.transform.inverse() * Vec4::point(world_x, world_y, -1.0);
-        let origin = self.transform.inverse() * Vec4::point(0.0, 0.0, 0.0);
+        let pixel = &self.inverse * &Vec4::point(world_x, world_y, -1.0);
+        let origin = &self.inverse * &Vec4::point(0.0, 0.0, 0.0);
         let direction = (pixel - origin).norm();
         Ray { origin, direction }
     }
     pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
+
+        let total_pixels = (self.hsize * self.vsize) as u64;
+
+        let bar = ProgressBar::new(total_pixels);
+        bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] [{wide_bar}] {pos}/{len} ({percent}%)",
+            )
+            .unwrap()
+            .progress_chars("=>-"),
+        );
 
         let pool = ThreadPoolBuilder::new()
             .num_threads(self.max_threads)
@@ -92,11 +108,18 @@ impl Camera {
             .install(|| {
                 pixels.into_par_iter().map(|(x, y)| {
                     let ray = self.ray_for_pixel(x, y);
+                    if x == 5 && y == 5 {
+                        println!("");
+                    }
                     let color = world.color_at(&ray, self.reflection_max);
+                    bar.inc(1);
                     ((x, y), color)
                 })
             })
             .collect();
+
+        bar.finish();
+
         for ((x, y), color) in results {
             image.set_pixel(x, y, color);
         }
