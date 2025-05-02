@@ -10,6 +10,7 @@ pub mod group;
 pub mod plane;
 pub mod sphere;
 pub mod triangle;
+pub mod smooth_triangle;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -23,14 +24,14 @@ pub trait Shape: Debug + Sync + Send {
         self.local_intersect(&local_ray)
     }
     fn local_intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>>;
-    fn normal_at(&self, world_point: Vec4) -> Vec4 {
+    fn normal_at(&self, world_point: Vec4, i: &Intersection) -> Vec4 {
         let local_point = self.inverse() * &world_point;
-        let local_normal = self.local_normal_at(local_point);
+        let local_normal = self.local_normal_at(local_point, i);
         let mut world_normal = self.inverse().transpose() * local_normal;
         world_normal.w = 0.0;
         world_normal.norm()
     }
-    fn local_normal_at(&self, local_point: Vec4) -> Vec4;
+    fn local_normal_at(&self, local_point: Vec4, i: &Intersection) -> Vec4;
     fn transform(&self) -> &SqMatrix<4>;
     fn material(&self) -> &Material;
     fn set_transformation(&mut self, mat: SqMatrix<4>);

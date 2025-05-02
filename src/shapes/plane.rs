@@ -45,12 +45,12 @@ impl Shape for Plane {
             return vec![];
         } else {
             let t = -ray.origin.y / ray.direction.y;
-            let i = Intersection::new(t, self);
+            let i = Intersection::new(t, self, None, None);
             return vec![i];
         }
     }
 
-    fn local_normal_at(&self, _local_point: crate::vec4::Vec4) -> crate::vec4::Vec4 {
+    fn local_normal_at(&self, _local_point: crate::vec4::Vec4, _i: &Intersection) -> crate::vec4::Vec4 {
         Vec4::vector(0.0, 1.0, 0.0)
     }
 

@@ -72,11 +72,13 @@ impl<'a> Computations<'a> {
 pub struct Intersection<'a> {
     pub t: f64,
     pub object: &'a dyn Shape,
+    pub u: Option<f64>,
+    pub v: Option<f64>
 }
 
 impl Intersection<'_> {
-    pub fn new(t: f64, object: &dyn Shape) -> Intersection {
-        Intersection { t, object }
+    pub fn new(t: f64, object: &dyn Shape, u: Option<f64>, v: Option<f64>) -> Intersection {
+        Intersection { t, object, u, v }
     }
 
     pub fn hit<'a>(int_list: &'a [Intersection<'a>]) -> Option<&'a Intersection<'a>> {
@@ -95,7 +97,7 @@ impl Intersection<'_> {
             self.object,
             point,
             -ray.direction,
-            self.object.normal_at(point),
+            self.object.normal_at(point, self),
             ray.direction,
             0.0,
             0.0,
@@ -157,27 +159,27 @@ pub mod tests {
     #[test]
     fn get_hit() {
         let sphere = Sphere::new();
-        let i1 = Intersection::new(1.0, &sphere);
-        let i2 = Intersection::new(2.0, &sphere);
+        let i1 = Intersection::new(1.0, &sphere, None, None);
+        let i2 = Intersection::new(2.0, &sphere, None, None);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(i1, *i.unwrap());
 
-        let i1 = Intersection::new(-1.0, &sphere);
-        let i2 = Intersection::new(1.0, &sphere);
+        let i1 = Intersection::new(-1.0, &sphere, None, None);
+        let i2 = Intersection::new(1.0, &sphere, None, None);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(i2, *i.unwrap());
-        let i1 = Intersection::new(-1.0, &sphere);
-        let i2 = Intersection::new(-1.0, &sphere);
+        let i1 = Intersection::new(-1.0, &sphere, None, None);
+        let i2 = Intersection::new(-1.0, &sphere, None, None);
         let xs = vec![i1, i2];
         let i = Intersection::hit(&xs);
         assert_eq!(None, i);
 
-        let i1 = Intersection::new(5.0, &sphere);
-        let i2 = Intersection::new(7.0, &sphere);
-        let i3 = Intersection::new(-3.0, &sphere);
-        let i4 = Intersection::new(2.0, &sphere);
+        let i1 = Intersection::new(5.0, &sphere, None, None);
+        let i2 = Intersection::new(7.0, &sphere, None, None);
+        let i3 = Intersection::new(-3.0, &sphere, None, None);
+        let i4 = Intersection::new(2.0, &sphere, None, None);
         let xs = vec![i1, i2, i3, i4];
         let i = Intersection::hit(&xs);
         assert_eq!(*i.unwrap(), i4);
@@ -187,13 +189,13 @@ pub mod tests {
     pub fn hit_when_intersection_outside_inside() {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
-        let i = Intersection::new(4.0, &s);
+        let i = Intersection::new(4.0, &s, None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(comps.inside, false);
 
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let s = Sphere::new();
-        let i = Intersection::new(1.0, &s);
+        let i = Intersection::new(1.0, &s, None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(comps.point, Vec4::point(0.0, 0.0, 1.0));
         assert_eq!(comps.eyev, Vec4::vector(0.0, 0.0, -1.0));
@@ -209,7 +211,7 @@ pub mod tests {
             Vec4::vector(0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0),
         );
 
-        let i = Intersection::new(SQRT_2, &s);
+        let i = Intersection::new(SQRT_2, &s, None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         assert_eq!(
             comps.reflectv,

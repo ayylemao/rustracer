@@ -43,7 +43,7 @@ impl Shape for Group {
         panic!("local_intersect should never be called on a Group")
     }
 
-    fn local_normal_at(&self, _local_point: crate::vec4::Vec4) -> crate::vec4::Vec4 {
+    fn local_normal_at(&self, _local_point: crate::vec4::Vec4, _i: &Intersection) -> crate::vec4::Vec4 {
         panic!("local_normal_at should never be called on a Group");
     }
 
@@ -51,7 +51,7 @@ impl Shape for Group {
         self.children[0].material()
     }
 
-    fn normal_at(&self, _world_point: crate::vec4::Vec4) -> crate::vec4::Vec4 {
+    fn normal_at(&self, _world_point: crate::vec4::Vec4, _i: &Intersection) -> crate::vec4::Vec4 {
         panic!("normal_at should never be called on a Group");
     }
 

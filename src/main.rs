@@ -12,8 +12,8 @@ use raytracer::{
 };
 use std::{f64::consts::PI, sync::Arc};
 
-const WIDTH: usize = 800;
-const HEIGHT: usize = 400;
+const WIDTH: usize = 2000;
+const HEIGHT: usize = 1000;
 fn main() {
     let mut p = Parser::new();
     let mut teapot = p.parse_file("objects/teapot.obj");

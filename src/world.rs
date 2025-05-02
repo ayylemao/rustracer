@@ -179,7 +179,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
 
         let shape = &*w.shapes[0]; // first object
-        let i = Intersection::new(4.0, shape);
+        let i = Intersection::new(4.0, shape, None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let c = w.shade_hit(comps, 0);
 
@@ -194,7 +194,7 @@ pub mod tests {
 
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let shape = &*w.shapes[1];
-        let i = Intersection::new(0.5, shape);
+        let i = Intersection::new(0.5, shape, None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let c = w.shade_hit(comps, 0);
 
@@ -268,7 +268,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let shape = &world.shapes[1];
 
-        let i = Intersection::new(1.0, shape.as_ref());
+        let i = Intersection::new(1.0, shape.as_ref(), None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 3);
         assert_eq!(color, Color::black());
@@ -323,7 +323,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
-        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let i = Intersection::new(SQRT_2, shape.as_ref(), None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 3);
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
@@ -378,7 +378,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
-        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let i = Intersection::new(SQRT_2, shape.as_ref(), None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.shade_hit(comps, 1);
         assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
@@ -432,7 +432,7 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let shape = &world.shapes[2];
 
-        let i = Intersection::new(SQRT_2, shape.as_ref());
+        let i = Intersection::new(SQRT_2, shape.as_ref(), None, None);
         let comps = i.prepare_computations(&r, &Vec::<Intersection>::new());
         let color = world.reflected_color(&comps, 0);
         assert_eq!(color, Color::black());
@@ -461,12 +461,12 @@ pub mod tests {
         let b = &world.shapes[1];
         let c = &world.shapes[2];
         let xs = vec![
-            Intersection::new(2.0, a.as_ref()),
-            Intersection::new(2.75, b.as_ref()),
-            Intersection::new(3.25, c.as_ref()),
-            Intersection::new(4.75, b.as_ref()),
-            Intersection::new(5.25, c.as_ref()),
-            Intersection::new(6.0, a.as_ref()),
+            Intersection::new(2.0, a.as_ref(), None, None),
+            Intersection::new(2.75, b.as_ref(), None, None),
+            Intersection::new(3.25, c.as_ref(), None, None),
+            Intersection::new(4.75, b.as_ref(), None, None),
+            Intersection::new(5.25, c.as_ref(), None, None),
+            Intersection::new(6.0, a.as_ref(), None, None),
         ];
         let expected = [
             [1.0, 1.5],
@@ -499,7 +499,7 @@ pub mod tests {
 
         let a = &world.shapes[0];
 
-        let i = Intersection::new(5.0, a.as_ref());
+        let i = Intersection::new(5.0, a.as_ref(), None, None);
         let xs = world.intersect(&r);
         let comps = i.prepare_computations(&r, &xs);
         assert!(comps.under_point.z > EPSILON / 2.0);
@@ -513,8 +513,8 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
 
         let xs = vec![
-            Intersection::new(4.0, shape.as_ref()),
-            Intersection::new(6.0, shape.as_ref()),
+            Intersection::new(4.0, shape.as_ref(), None, None),
+            Intersection::new(6.0, shape.as_ref(), None, None),
         ];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 5);
@@ -554,8 +554,8 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
 
         let xs = vec![
-            Intersection::new(4.0, shape.as_ref()),
-            Intersection::new(6.0, shape.as_ref()),
+            Intersection::new(4.0, shape.as_ref(), None, None),
+            Intersection::new(6.0, shape.as_ref(), None, None),
         ];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 0);
@@ -596,8 +596,8 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, SQRT_2 / 2.0, 0.0, 1.0, 0.0);
 
         let xs = vec![
-            Intersection::new(-SQRT_2 / 2.0, shape.as_ref()),
-            Intersection::new(SQRT_2 / 2.0, shape.as_ref()),
+            Intersection::new(-SQRT_2 / 2.0, shape.as_ref(), None, None),
+            Intersection::new(SQRT_2 / 2.0, shape.as_ref(), None, None),
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 5);
@@ -641,10 +641,10 @@ pub mod tests {
         let r = Ray::new(0.0, 0.0, 0.1, 0.0, 1.0, 0.0);
 
         let xs = vec![
-            Intersection::new(-0.9899, a.as_ref()),
-            Intersection::new(-0.4899, b.as_ref()),
-            Intersection::new(0.4899, b.as_ref()),
-            Intersection::new(0.9899, a.as_ref()),
+            Intersection::new(-0.9899, a.as_ref(), None, None),
+            Intersection::new(-0.4899, b.as_ref(), None, None),
+            Intersection::new(0.4899, b.as_ref(), None, None),
+            Intersection::new(0.9899, a.as_ref(), None, None),
         ];
         let comps = xs[2].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps, 5);
@@ -672,7 +672,7 @@ pub mod tests {
         w.add_shape(Arc::new(ball));
         let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let floor = w.shapes[2].as_ref();
-        let xs = vec![Intersection::new(SQRT_2, floor)];
+        let xs = vec![Intersection::new(SQRT_2, floor, None, None)];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.shade_hit(comps, 5);
         assert_eq!(color, Color::new(0.93642, 0.68642, 0.68642));
@@ -688,8 +688,8 @@ pub mod tests {
         w.add_shape(Arc::new(shape));
         let shape = w.shapes[0].as_ref();
         let xs = vec![
-            Intersection::new(-SQRT_2 / 2.0, shape),
-            Intersection::new(SQRT_2 / 2.0, shape),
+            Intersection::new(-SQRT_2 / 2.0, shape, None, None),
+            Intersection::new(SQRT_2 / 2.0, shape, None, None),
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
@@ -705,8 +705,8 @@ pub mod tests {
         w.add_shape(Arc::new(shape));
         let shape = w.shapes[0].as_ref();
         let xs = vec![
-            Intersection::new(-1.0, shape),
-            Intersection::new(1.0, shape),
+            Intersection::new(-1.0, shape, None, None),
+            Intersection::new(1.0, shape, None, None),
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
@@ -721,7 +721,7 @@ pub mod tests {
         w.shapes.remove(0);
         w.add_shape(Arc::new(shape));
         let shape = w.shapes[0].as_ref();
-        let xs = vec![Intersection::new(1.8589, shape)];
+        let xs = vec![Intersection::new(1.8589, shape, None, None)];
         let comps = xs[0].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
         assert!(reflectance.approx_eq(&0.48873));
@@ -749,7 +749,7 @@ pub mod tests {
         w.add_shape(Arc::new(ball));
         let r = Ray::new(0.0, 0.0, -3.0, 0.0, -SQRT_2 / 2.0, SQRT_2 / 2.0);
         let floor = w.shapes[2].as_ref();
-        let xs = vec![Intersection::new(SQRT_2, floor)];
+        let xs = vec![Intersection::new(SQRT_2, floor, None, None)];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.shade_hit(comps, 5);
         assert!(color.r.approx_eq(&0.93391), "red channel off");
