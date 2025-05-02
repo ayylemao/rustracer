@@ -6,14 +6,12 @@ use crate::{
     matrix::{Matrix, SqMatrix},
     vec4::Vec4,
 };
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Plane {
     pub id: usize,
     pub transform: SqMatrix<4>,
     pub material: Material,
-    pub parent: Option<Arc<dyn Shape + Send + Sync>>
 }
 
 impl Plane {
@@ -23,7 +21,6 @@ impl Plane {
             id,
             transform: Matrix::<4, 4>::eye(),
             material: Material::default(),
-            parent: None
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
@@ -32,7 +29,6 @@ impl Plane {
             id,
             transform: mat,
             material: Material::default(),
-            parent: None
         }
     }
 }
@@ -73,10 +69,6 @@ impl Shape for Plane {
 
     fn id(&self) -> usize {
         self.id
-    }
-
-    fn set_parent(&mut self, parent: Arc<dyn Shape>) {
-        self.parent = Some(parent);
     }
 }
 

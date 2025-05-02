@@ -5,7 +5,7 @@ use raytracer::{
     light::PointLight,
     matrix::Matrix,
     patterns::{Pattern, checker::Checker, gradient::Gradient},
-    shapes::{Shape, plane::Plane},
+    shapes::{Shape, group::Group, plane::Plane},
     vec4::Vec4,
     world::World,
 };
@@ -67,21 +67,24 @@ fn main() {
         Vec4::point(-10.0, 10.0, -10.0),
         Color::white(),
     ));
+    let mut g = Group::new();
+    g.add_child(Arc::new(center));
+    g.add_child(Arc::new(right));
+    g.add_child(Arc::new(left));
+
+    g.set_transformation(Matrix::rotation_y(PI));
 
     world.add_shape(Arc::new(floor));
-    //world.add_shape(Arc::new(wall));
-    world.add_shape(Arc::new(center));
-    world.add_shape(Arc::new(left));
-    world.add_shape(Arc::new(right));
+    world.add_shape(Arc::new(g));
 
     // === Camera ===
     let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0, 5, 16);
     camera.set_view(
-        Vec4::point(0.0, 2.0, -6.0),
+        Vec4::point(0.0, 5.0, 1.0),
         Vec4::point(0.0, 1.0, 0.0),
         Vec4::vector(0.0, 1.0, 0.0),
     );
 
     let image = camera.render(&world);
-    image.save("image_test.png");
+    image.save("image_test_group.png");
 }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use super::{Shape, next_shape_id};
 use crate::intersection::Intersection;
 use crate::material::Material;
@@ -12,7 +10,6 @@ pub struct Sphere {
     pub id: usize,
     pub transform: SqMatrix<4>,
     pub material: Material,
-    pub parent: Option<Arc<dyn Shape + Send + Sync>>
 }
 
 impl Sphere {
@@ -22,7 +19,6 @@ impl Sphere {
             id,
             transform: Matrix::<4, 4>::eye(),
             material: Material::default(),
-            parent: None
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
@@ -31,7 +27,6 @@ impl Sphere {
             id,
             transform: mat,
             material: Material::default(),
-            parent: None
         }
     }
     pub fn glas(refractive_index: f64) -> Sphere {
@@ -42,7 +37,6 @@ impl Sphere {
             id,
             transform: Matrix::eye(),
             material: m1,
-            parent: None
         }
     }
 }
@@ -88,10 +82,6 @@ impl Shape for Sphere {
 
     fn id(&self) -> usize {
         self.id
-    }
-
-    fn set_parent(&mut self, parent: Arc<dyn Shape>) {
-        self.parent = Some(parent);
     }
 }
 
