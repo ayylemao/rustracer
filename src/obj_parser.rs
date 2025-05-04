@@ -114,7 +114,7 @@ impl Parser {
             let n3 = indices[i + 1].normal_index.map(|i| self.normals[i]);
     
             let tri: Arc<dyn Shape> = match (n1, n2, n3) {
-                (Some(n1), Some(n2), Some(n3)) => Arc::new(SmoothTriangle::new(Triangle::new(p1, p2, p3), n1, n2, n3)),
+                (Some(n1), Some(n2), Some(n3)) => Arc::new(SmoothTriangle::new(p1, p2, p3, n1, n2, n3)),
                 //(Some(n1), Some(n2), Some(n3)) => Arc::new(Triangle::new(p1, p2, p3)),
                 _ => Arc::new(Triangle::new(p1, p2, p3)),
             };
@@ -159,7 +159,7 @@ pub mod tests {
     #[test]
     fn normals() {
         let mut p = Parser::new();
-        let g = p.parse_file("objects/test_files/obj2.obj");
+        let _ = p.parse_file("objects/test_files/obj2.obj");
         assert_eq!(p.normals[1], Vec4::vector(0.0, 0.0, 1.0));
         assert_eq!(p.normals[2], Vec4::vector(0.707, 0.0, -0.707));
         assert_eq!(p.normals[3], Vec4::vector(1.0, 2.0, 3.0));
@@ -174,20 +174,16 @@ pub mod tests {
         let t1 = g_inner.children[0].as_any().downcast_ref::<SmoothTriangle>().unwrap();
         let t2 = g_inner.children[1].as_any().downcast_ref::<SmoothTriangle>().unwrap();
 
-        println!("{:?}",t1.n1);
-        println!("{:?}",t1.n2);
-        println!("{:?}",t1.n3);
-
-        assert_eq!(t1.triangle.p1, p.vertices[1]);
-        assert_eq!(t1.triangle.p2, p.vertices[2]);
-        assert_eq!(t1.triangle.p3, p.vertices[3]);
+        assert_eq!(t1.p1, p.vertices[1]);
+        assert_eq!(t1.p2, p.vertices[2]);
+        assert_eq!(t1.p3, p.vertices[3]);
         assert_eq!(t1.n1, p.normals[3]);
         assert_eq!(t1.n2, p.normals[1]);
         assert_eq!(t1.n3, p.normals[2]);
 
-        assert_eq!(t2.triangle.p1, p.vertices[1]);
-        assert_eq!(t2.triangle.p2, p.vertices[2]);
-        assert_eq!(t2.triangle.p3, p.vertices[3]);
+        assert_eq!(t2.p1, p.vertices[1]);
+        assert_eq!(t2.p2, p.vertices[2]);
+        assert_eq!(t2.p3, p.vertices[3]);
         assert_eq!(t2.n1, p.normals[3]);
         assert_eq!(t2.n2, p.normals[1]);
         assert_eq!(t2.n3, p.normals[2]);

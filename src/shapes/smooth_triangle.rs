@@ -1,4 +1,3 @@
-use super::triangle::Triangle;
 use super::{Shape, next_shape_id};
 use crate::intersection::Intersection;
 use crate::material::Material;
@@ -12,29 +11,45 @@ pub struct SmoothTriangle {
     pub transform: SqMatrix<4>,
     pub material: Material,
     pub inverse: SqMatrix<4>,
-    pub triangle: Triangle,
+    pub p1: Vec4,
+    pub p2: Vec4,
+    pub p3: Vec4,
     pub n1: Vec4,
     pub n2: Vec4,
-    pub n3: Vec4
+    pub n3: Vec4,
+    pub e1: Vec4,
+    pub e2: Vec4,
+    pub normal: Vec4
 }
 
 impl SmoothTriangle {
     pub fn new(
-        triangle: Triangle,
+        p1: Vec4,
+        p2: Vec4,
+        p3: Vec4,
         n1: Vec4,
         n2: Vec4,
         n3: Vec4
     ) -> SmoothTriangle {
         let id = next_shape_id();
+        let e1 = p2 - p1;
+        let e2 = p3 - p1;
+        let normal = e2.cross(&e1).norm();
         Self {
             id,
             transform: Matrix::eye(),
             material: Material::default(),
             inverse: Matrix::eye(),
-            triangle,
+            p1,
+            p2,
+            p3,
             n1,
             n2,
-            n3
+            n3,
+            e1,
+            e2,
+            normal
+
         }
     }
 }
@@ -48,31 +63,31 @@ impl Shape for SmoothTriangle {
         &'a self,
         ray: &crate::ray::Ray,
     ) -> Vec<crate::intersection::Intersection<'a>> {
-        let dir_cross_e2 = ray.direction.cross(&self.triangle.e2);
-        let det = self.triangle.e1.dot(&dir_cross_e2);
+        let dir_cross_e2 = ray.direction.cross(&self.e2);
+        let det = self.e1.dot(&dir_cross_e2);
         if det.abs() < EPSILON {
             return vec![];
         }
 
         let f = 1.0 / det;
-        let p1_to_origin = ray.origin - self.triangle.p1;
+        let p1_to_origin = ray.origin - self.p1;
         let u = f * p1_to_origin.dot(&dir_cross_e2);
         if u < 0.0 || u > 1.0 {
             return vec![];
         }
 
-        let origin_cross_e1 = p1_to_origin.cross(&self.triangle.e1);
+        let origin_cross_e1 = p1_to_origin.cross(&self.e1);
         let v = f * ray.direction.dot(&origin_cross_e1);
         if v < 0.0 || (u + v) > 1.0 {
             return vec![];
         }
 
-        let t = f * self.triangle.e2.dot(&origin_cross_e1);
+        let t = f * self.e2.dot(&origin_cross_e1);
         vec![Intersection::new(t, self, Some(u), Some(v))]
     }
 
     fn local_normal_at(&self, _local_point: Vec4, i: &Intersection) -> Vec4 {
-        self.n2 * i.u.unwrap() + self.n3 * i.v.unwrap() + self.n1 * (1.0 - i.u.unwrap() - i.v.unwrap())
+        (self.n2 * i.u.unwrap() + self.n3 * i.v.unwrap() + self.n1 * (1.0 - i.u.unwrap() - i.v.unwrap())).norm()
     }
 
     fn material(&self) -> &Material {
@@ -106,7 +121,7 @@ impl Shape for SmoothTriangle {
 pub mod tests {
     use std::sync::Arc;
 
-    use crate::{color::Color, intersection::Intersection, light::PointLight, ray::Ray, shapes::{triangle::Triangle, Shape}, vec4::Vec4, world::World};
+    use crate::{color::Color, intersection::Intersection, light::PointLight, ray::Ray, shapes::Shape, vec4::Vec4, world::World};
     use crate::math::ApproxEq;
     use super::SmoothTriangle;
 
@@ -122,8 +137,7 @@ pub mod tests {
         let n2 = Vec4::vector(-1.0, 1.0, 0.0);
         let n3 = Vec4::vector(1.0, 0.0, 0.0);
 
-        let tri = Triangle::new(p1, p2, p3);
-        let tri = SmoothTriangle::new(tri, n1, n2, n3);
+        let tri = SmoothTriangle::new(p1, p2, p3, n1, n2, n3);
         let mut w = World::default();
         w.add_shape(Arc::new(tri));
         let tri = w.shapes[2].as_ref();
@@ -142,8 +156,7 @@ pub mod tests {
         let n2 = Vec4::vector(-1.0, 0.0, 0.0);
         let n3 = Vec4::vector(1.0, 0.0, 0.0);
 
-        let tri = Triangle::new(p1, p2, p3);
-        let tri = SmoothTriangle::new(tri, n1, n2, n3);
+        let tri = SmoothTriangle::new(p1, p2, p3, n1, n2, n3);
 
         let xs = tri.local_intersect(&r);
         assert!(xs[0].u.unwrap().approx_eq(&0.45));
@@ -162,8 +175,7 @@ pub mod tests {
         let u = 0.45;
         let v = 0.25;
 
-        let tri = Triangle::new(p1, p2, p3);
-        let tri = SmoothTriangle::new(tri, n1, n2, n3);
+        let tri = SmoothTriangle::new(p1, p2, p3, n1, n2, n3);
 
         let mut w = World::new(PointLight::new(Vec4::point(5.0, 5.0, 5.0), Color::white()));
 
@@ -187,8 +199,7 @@ pub mod tests {
         let u = 0.45;
         let v = 0.25;
 
-        let tri = Triangle::new(p1, p2, p3);
-        let tri = SmoothTriangle::new(tri, n1, n2, n3);
+        let tri = SmoothTriangle::new(p1, p2, p3, n1, n2, n3);
 
         let mut w = World::new(PointLight::new(Vec4::point(5.0, 5.0, 5.0), Color::white()));
 

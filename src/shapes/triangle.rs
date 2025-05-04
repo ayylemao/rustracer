@@ -70,7 +70,7 @@ impl Shape for Triangle {
         }
 
         let t = f * self.e2.dot(&origin_cross_e1);
-        vec![Intersection::new(t, self, None, None)]
+        vec![Intersection::new(t, self, Some(u), Some(v))]
     }
 
     fn local_normal_at(&self, _local_point: Vec4, _i: &Intersection) -> Vec4 {
