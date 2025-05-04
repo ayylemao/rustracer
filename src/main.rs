@@ -16,7 +16,7 @@ const WIDTH: usize = 1600;
 const HEIGHT: usize = 800;
 fn main() {
     let mut p = Parser::new();
-    let mut teapot = p.parse_file("objects/teapot.obj");
+    let mut teapot = p.parse_file("objects/teapot_no_in.obj");
     let mut tmat = Material::default();
     tmat.set_color(Color::orange());
     teapot.set_material(tmat);
