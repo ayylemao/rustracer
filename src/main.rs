@@ -6,7 +6,7 @@ use raytracer::{
     matrix::Matrix,
     obj_parser::Parser,
     patterns::{checker::Checker, Pattern},
-    shapes::{plane::Plane, Shape},
+    shapes::{cube::Cube, plane::Plane, Shape},
     vec4::Vec4,
     world::World, Sphere,
 };
@@ -16,8 +16,9 @@ const WIDTH: usize = 1600;
 const HEIGHT: usize = 800;
 fn main() {
     let mut p = Parser::new();
-    let mut teapot = p.parse_file("objects/teapot_no_in.obj");
+    let mut teapot = p.parse_file("objects/teapot.obj");
     let mut tmat = Material::default();
+    tmat.reflective = 0.8;
     tmat.set_color(Color::orange());
     teapot.set_material(tmat);
     teapot.set_transformation(Matrix::translation(-4.0, 0.0, 3.0) * Matrix::rotation_x(-PI/2.0) * Matrix::scaling(0.4, 0.4, 0.4));
@@ -36,8 +37,8 @@ fn main() {
         intensity: Color::white(),
     });
 
-    let mut s = Sphere::new();
-    s.set_transformation(Matrix::translation(-3.0, 1.0, -3.0));
+    let mut s = Cube::new();
+    s.set_transformation( Matrix::translation(-3.0, 1.0, -3.0) * Matrix::rotation_y(PI/3.0));
     s.material.reflective = 0.9;
     s.material.color = Color::red();
 

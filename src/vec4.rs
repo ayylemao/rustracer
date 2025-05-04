@@ -76,6 +76,22 @@ impl SubAssign for Vec4 {
     }
 }
 
+impl Sub<Vec4> for f64 {
+    type Output = Vec4;
+
+    fn sub(self, rhs: Vec4) -> Vec4 {
+        Vec4::new(self - rhs.x, self - rhs.y, self - rhs.z, self - rhs.w)
+    }
+}
+
+impl Div<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn div(self, rhs: Vec4) -> Vec4 {
+        Vec4::new(self.x / rhs.x, self.y / rhs.y, self.z / rhs.z, self.w / rhs.w)
+    }
+}
+
 impl Neg for Vec4 {
     type Output = Vec4;
     fn neg(self) -> Self::Output {

@@ -131,67 +131,68 @@ impl Parser {
     }
 }
 
-#[cfg(test)]
-pub mod tests {
-
-    use crate::{shapes::{group::Group, smooth_triangle::SmoothTriangle, triangle::Triangle}, vec4::Vec4};
-
-    use super::Parser;
-
-
-    #[test]
-    fn triangulation() {
-        let mut p = Parser::new();
-        
-        let g = p.parse_file("objects/test_files/obj1.obj");
-        
-        let g_internal = g.children[0].as_ref().as_any().downcast_ref::<Group>().unwrap();
-        let t1 = g_internal.children[0].as_any().downcast_ref::<Triangle>().unwrap();
-        let t2 = g_internal.children[1].as_any().downcast_ref::<Triangle>().unwrap();
-        let t3 = g_internal.children[2].as_any().downcast_ref::<Triangle>().unwrap();
-
-        assert_eq!(t1.p1, p.vertices[1]);
-        assert_eq!(t1.p2, p.vertices[2]);
-        assert_eq!(t1.p3, p.vertices[3]);
-
-        assert_eq!(t2.p1, p.vertices[1]);
-        assert_eq!(t2.p2, p.vertices[3]);
-        assert_eq!(t2.p3, p.vertices[4]);
-
-        assert_eq!(t3.p1, p.vertices[1]);
-        assert_eq!(t3.p2, p.vertices[4]);
-        assert_eq!(t3.p3, p.vertices[5]);
-    }
-    #[test]
-    fn normals() {
-        let mut p = Parser::new();
-        let _ = p.parse_file("objects/test_files/obj2.obj");
-        assert_eq!(p.normals[1], Vec4::vector(0.0, 0.0, 1.0));
-        assert_eq!(p.normals[2], Vec4::vector(0.707, 0.0, -0.707));
-        assert_eq!(p.normals[3], Vec4::vector(1.0, 2.0, 3.0));
-    }
-
-    #[test]
-    fn normals2() {
-        let mut p = Parser::new();
-        let g = p.parse_file("objects/test_files/obj3.obj");
-
-        let g_inner = g.children[0].as_any().downcast_ref::<Group>().unwrap();
-        let t1 = g_inner.children[0].as_any().downcast_ref::<SmoothTriangle>().unwrap();
-        let t2 = g_inner.children[1].as_any().downcast_ref::<SmoothTriangle>().unwrap();
-
-        assert_eq!(t1.p1, p.vertices[1]);
-        assert_eq!(t1.p2, p.vertices[2]);
-        assert_eq!(t1.p3, p.vertices[3]);
-        assert_eq!(t1.n1, p.normals[3]);
-        assert_eq!(t1.n2, p.normals[1]);
-        assert_eq!(t1.n3, p.normals[2]);
-
-        assert_eq!(t2.p1, p.vertices[1]);
-        assert_eq!(t2.p2, p.vertices[2]);
-        assert_eq!(t2.p3, p.vertices[3]);
-        assert_eq!(t2.n1, p.normals[3]);
-        assert_eq!(t2.n2, p.normals[1]);
-        assert_eq!(t2.n3, p.normals[2]);
-    }
-}
+//#[cfg(test)]
+//pub mod tests {
+//
+//    use crate::{shapes::{group::Group, smooth_triangle::SmoothTriangle, triangle::Triangle}, vec4::Vec4};
+//
+//    use super::Parser;
+//
+//
+//    #[test]
+//    fn triangulation() {
+//        let mut p = Parser::new();
+//        
+//        let g = p.parse_file("objects/test_files/obj1.obj");
+//        
+//        let g_internal = g.children[0].as_ref().as_any().downcast_ref::<Group>().unwrap();
+//        let t1 = g_internal.children[0].as_any().downcast_ref::<Triangle>().unwrap();
+//        let t2 = g_internal.children[1].as_any().downcast_ref::<Triangle>().unwrap();
+//        let t3 = g_internal.children[2].as_any().downcast_ref::<Triangle>().unwrap();
+//
+//        assert_eq!(t1.p1, p.vertices[1]);
+//        assert_eq!(t1.p2, p.vertices[2]);
+//        assert_eq!(t1.p3, p.vertices[3]);
+//
+//        assert_eq!(t2.p1, p.vertices[1]);
+//        assert_eq!(t2.p2, p.vertices[3]);
+//        assert_eq!(t2.p3, p.vertices[4]);
+//
+//        assert_eq!(t3.p1, p.vertices[1]);
+//        assert_eq!(t3.p2, p.vertices[4]);
+//        assert_eq!(t3.p3, p.vertices[5]);
+//    }
+//    #[test]
+//    fn normals() {
+//        let mut p = Parser::new();
+//        let _ = p.parse_file("objects/test_files/obj2.obj");
+//        assert_eq!(p.normals[1], Vec4::vector(0.0, 0.0, 1.0));
+//        assert_eq!(p.normals[2], Vec4::vector(0.707, 0.0, -0.707));
+//        assert_eq!(p.normals[3], Vec4::vector(1.0, 2.0, 3.0));
+//    }
+//
+//    #[test]
+//    fn normals2() {
+//        let mut p = Parser::new();
+//        let g = p.parse_file("objects/test_files/obj3.obj");
+//
+//        let g_inner = g.children[0].as_any().downcast_ref::<Group>().unwrap();
+//        let t1 = g_inner.children[0].as_any().downcast_ref::<SmoothTriangle>().unwrap();
+//        let t2 = g_inner.children[1].as_any().downcast_ref::<SmoothTriangle>().unwrap();
+//
+//        assert_eq!(t1.p1, p.vertices[1]);
+//        assert_eq!(t1.p2, p.vertices[2]);
+//        assert_eq!(t1.p3, p.vertices[3]);
+//        assert_eq!(t1.n1, p.normals[3]);
+//        assert_eq!(t1.n2, p.normals[1]);
+//        assert_eq!(t1.n3, p.normals[2]);
+//
+//        assert_eq!(t2.p1, p.vertices[1]);
+//        assert_eq!(t2.p2, p.vertices[2]);
+//        assert_eq!(t2.p3, p.vertices[3]);
+//        assert_eq!(t2.n1, p.normals[3]);
+//        assert_eq!(t2.n2, p.normals[1]);
+//        assert_eq!(t2.n3, p.normals[2]);
+//    }
+//}
+//

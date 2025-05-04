@@ -12,6 +12,7 @@ pub mod plane;
 pub mod sphere;
 pub mod triangle;
 pub mod smooth_triangle;
+pub mod cube;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
