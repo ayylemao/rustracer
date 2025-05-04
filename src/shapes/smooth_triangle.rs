@@ -95,6 +95,10 @@ impl Shape for SmoothTriangle {
     fn inverse(&self) -> &Matrix<4, 4> {
         &self.inverse
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 
@@ -135,7 +139,7 @@ pub mod tests {
         let p3 = Vec4::point(1.0, 0.0, 0.0);
 
         let n1 = Vec4::vector(0.0, 1.0, 0.0);
-        let n2 = Vec4::vector(-1.0, 1.0, 0.0);
+        let n2 = Vec4::vector(-1.0, 0.0, 0.0);
         let n3 = Vec4::vector(1.0, 0.0, 0.0);
 
         let tri = Triangle::new(p1, p2, p3);
@@ -147,26 +151,58 @@ pub mod tests {
     }
     #[test]
     fn smooth_tri3() {
-        let r = Ray::new(-0.2, 0.3, -2.0, 0.0, 0.0, 1.0);
+        
         let p1 = Vec4::point(0.0, 1.0, 0.0);
         let p2 = Vec4::point(-1.0, 0.0, 0.0);
         let p3 = Vec4::point(1.0, 0.0, 0.0);
 
         let n1 = Vec4::vector(0.0, 1.0, 0.0);
-        let n2 = Vec4::vector(-1.0, 1.0, 0.0);
+        let n2 = Vec4::vector(-1.0, 0.0, 0.0);
         let n3 = Vec4::vector(1.0, 0.0, 0.0);
+        let u = 0.45;
+        let v = 0.25;
 
         let tri = Triangle::new(p1, p2, p3);
         let tri = SmoothTriangle::new(tri, n1, n2, n3);
 
-        let mut w = World::new(PointLight::new(Vec4::point(0.0, 0.0, 0.0), Color::white()));
+        let mut w = World::new(PointLight::new(Vec4::point(5.0, 5.0, 5.0), Color::white()));
 
         w.add_shape(Arc::new(tri));
 
         let tri = w.shapes[0].as_ref();
         
-        let i = Intersection::new(1.0, tri, Some(0.45), Some(0.25));
-        let n = tri.local_normal_at(Vec4::point(0.0, 0.0, 0.0), &i);
+        let i = Intersection::new(1.0, tri, Some(u), Some(v));
+        let n = tri.normal_at(Vec4::point(0.0, 0.0, 0.0), &i);
         assert_eq!(n, Vec4::vector(-0.5547, 0.83205, 0.0));
+    }
+    #[test]
+    fn smooth_tri4() { 
+        let p1 = Vec4::point(0.0, 1.0, 0.0);
+        let p2 = Vec4::point(-1.0, 0.0, 0.0);
+        let p3 = Vec4::point(1.0, 0.0, 0.0);
+
+        let n1 = Vec4::vector(0.0, 1.0, 0.0);
+        let n2 = Vec4::vector(-1.0, 0.0, 0.0);
+        let n3 = Vec4::vector(1.0, 0.0, 0.0);
+        let u = 0.45;
+        let v = 0.25;
+
+        let tri = Triangle::new(p1, p2, p3);
+        let tri = SmoothTriangle::new(tri, n1, n2, n3);
+
+        let mut w = World::new(PointLight::new(Vec4::point(5.0, 5.0, 5.0), Color::white()));
+
+        w.add_shape(Arc::new(tri));
+
+        let tri = w.shapes[0].as_ref();
+        
+        let i = Intersection::new(1.0, tri, Some(u), Some(v));
+
+        let r = Ray::new(-0.2, 0.3, -2.0, 0.0, 0.0, 1.0);
+        let xs = vec![i];
+
+        let comps = i.prepare_computations(&r, &xs);
+
+        assert_eq!(comps.normalv, Vec4::vector(-0.5547, 0.83205, 0.0));
     }
 }

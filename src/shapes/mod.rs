@@ -5,6 +5,7 @@ use crate::ray::Ray;
 use crate::vec4::Vec4;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::any::Any;
 
 pub mod group;
 pub mod plane;
@@ -18,7 +19,7 @@ pub fn next_shape_id() -> usize {
     SHAPE_ID.fetch_add(1, Ordering::Relaxed)
 }
 
-pub trait Shape: Debug + Sync + Send {
+pub trait Shape: Debug + Sync + Send + Any {
     fn intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let local_ray = ray.transform(self.inverse());
         self.local_intersect(&local_ray)
@@ -38,4 +39,5 @@ pub trait Shape: Debug + Sync + Send {
     fn set_material(&mut self, material: Material);
     fn id(&self) -> usize;
     fn inverse(&self) -> &Matrix<4, 4>;
+    fn as_any(&self) -> &dyn Any;
 }
