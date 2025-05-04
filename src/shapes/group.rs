@@ -86,10 +86,8 @@ impl Shape for Group {
     fn intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let mut xs = Vec::new();
         for child in &self.children {
-            let local_ray = ray.transform(child.inverse());
-            xs.extend(child.intersect(&local_ray));
+            xs.extend(child.intersect(&ray));
         }
-        //xs.sort();
         xs
     }
 

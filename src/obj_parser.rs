@@ -94,9 +94,15 @@ impl Parser {
                 }
             }
         }
+
         let mut top_group = Group::new();
+
+        let default_group = self.groups.remove("default").unwrap();
         for (_name, group) in &mut self.groups.drain() {
             top_group.add_child(Arc::new(group));
+        }
+        if default_group.children.len() > 0 {
+            top_group.add_child(Arc::new(default_group));
         }
         top_group
     }
