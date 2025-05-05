@@ -15,6 +15,7 @@ use std::{f64::consts::PI, sync::Arc};
 
 const WIDTH: usize = 1600;
 const HEIGHT: usize = 800;
+
 fn main() {
     let mut p = Parser::new();
     let mut teapot = p.parse_file("objects/teapot.obj");
@@ -70,5 +71,5 @@ fn main() {
     );
 
     let image = camera.render(&world);
-    image.save("teapot-post-change.png");
+    image.save("teapot-super-16.png");
 }

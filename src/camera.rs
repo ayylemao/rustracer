@@ -3,6 +3,9 @@ use crate::{canvas::Canvas, color::Color, matrix::Matrix, ray::Ray, vec4::Vec4, 
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::ThreadPoolBuilder;
 use rayon::prelude::*;
+use rand::Rng;
+use array_init::array_init;
+use crate::SAMPLES_PER_PIXEL;
 
 pub struct Camera {
     pub hsize: usize,
@@ -69,6 +72,32 @@ impl Camera {
         ];
         Matrix::from_array(val) * Matrix::translation(-from.x, -from.y, -from.z)
     }
+    pub fn rays_for_pixels(&self, px: usize, py: usize) -> [Ray; SAMPLES_PER_PIXEL] {
+        let mut rng = rand::rng();
+        let n_sqrt = (SAMPLES_PER_PIXEL as f64).sqrt().round() as usize;
+        debug_assert_eq!(n_sqrt * n_sqrt, SAMPLES_PER_PIXEL, "SAMPLES_PER_PIXEL must be a perfect square");
+
+        array_init(|i| {
+            let xi = i % n_sqrt;
+            let yi = i / n_sqrt;
+
+            let dx: f64 = (xi as f64 + rng.random::<f64>()) / n_sqrt as f64;
+            let dy: f64 = (yi as f64 + rng.random::<f64>()) / n_sqrt as f64;
+
+            let xoffset = (px as f64 + dx) * self.pixel_size;
+            let yoffset = (py as f64 + dy) * self.pixel_size;
+
+            let world_x = self.half_width - xoffset;
+            let world_y = self.half_height - yoffset;
+
+            let pixel = &self.inverse * &Vec4::point(world_x, world_y, -1.0);
+            let origin = &self.inverse * &Vec4::point(0.0, 0.0, 0.0);
+            let direction = (pixel - origin).norm();
+
+            Ray { origin, direction }
+        })
+    }
+
     pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
         let px = px as f64;
         let py = py as f64;
@@ -82,6 +111,7 @@ impl Camera {
         let direction = (pixel - origin).norm();
         Ray { origin, direction }
     }
+
     pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
 
@@ -107,8 +137,17 @@ impl Camera {
         let results: Vec<((usize, usize), Color)> = pool
             .install(|| {
                 pixels.into_par_iter().map(|(x, y)| {
-                    let ray = self.ray_for_pixel(x, y);
-                    let color = world.color_at(&ray, self.reflection_max);
+                    let color: Color = if SAMPLES_PER_PIXEL == 1 {
+                        let ray = self.ray_for_pixel(x, y);
+                        world.color_at(&ray, self.reflection_max)
+                    } else {
+                        let rays = self.rays_for_pixels(x, y);
+                        let mut color_avg = Color::black();
+                        for ray in rays {
+                            color_avg += world.color_at(&ray, self.reflection_max);
+                        }
+                        color_avg / SAMPLES_PER_PIXEL as f64
+                    };
                     bar.inc(1);
                     ((x, y), color)
                 })

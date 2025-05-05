@@ -5,7 +5,9 @@ edition = "2024"
 
 
 [dependencies]
+array-init = "2.1.0"
 image = "0.25.6"
 indicatif = "0.17.11"
 num-traits = "0.2.19"
+rand = "0.9.1"
 rayon = "1.10.0"

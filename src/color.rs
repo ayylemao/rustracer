@@ -1,6 +1,6 @@
 use super::math::ApproxEq;
 use num_traits::ToPrimitive;
-use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -153,6 +153,13 @@ impl SubAssign for Color {
         self.r -= rhs.r;
         self.g -= rhs.g;
         self.b -= rhs.b;
+    }
+}
+
+impl Div<f64> for Color {
+    type Output = Color;
+    fn div(self, rhs: f64) -> Self::Output {
+        Color::new(self.r / rhs, self.g / rhs, self.b / rhs)
     }
 }
 

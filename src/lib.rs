@@ -1,3 +1,5 @@
+pub const SAMPLES_PER_PIXEL: usize = 32;
+
 pub mod camera;
 pub mod canvas;
 pub mod color;
