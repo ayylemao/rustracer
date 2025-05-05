@@ -96,6 +96,9 @@ impl Shape for Group {
 
     fn intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let mut xs = Vec::new();
+        if !self.bounds().intersection(&ray) {
+            return vec![];
+        }
         for child in &self.children {
             xs.extend(child.intersect(&ray));
         }

@@ -22,6 +22,7 @@ fn main() {
     tmat.reflective = 0.8;
     tmat.set_color(Color::orange());
     teapot.set_material(tmat);
+    
     teapot.set_transformation(
         Matrix::translation(-4.0, 0.0, 3.0)
             * Matrix::rotation_x(-PI / 2.0)

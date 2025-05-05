@@ -1,4 +1,6 @@
-use crate::{matrix::Matrix, vec4::Vec4};
+use std::f64::INFINITY;
+
+use crate::{math::EPSILON, matrix::Matrix, ray::Ray, vec4::Vec4};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Bounds {
@@ -25,6 +27,36 @@ impl Bounds {
             && self.max.x.is_finite()
             && self.max.y.is_finite()
             && self.max.z.is_finite()
+    }
+
+    pub fn intersection<'a>(&'a self, ray: &Ray) -> bool {
+        let (xtmin, xtmax) = Bounds::check_axis(self.min.x, self.max.x, ray.origin.x, ray.direction.x);
+        let (ytmin, ytmax) = Bounds::check_axis(self.min.y, self.max.y, ray.origin.y, ray.direction.y);
+        let (ztmin, ztmax) = Bounds::check_axis(self.min.z, self.max.z, ray.origin.z, ray.direction.z);
+
+        let tmin = xtmin.max(ytmin).max(ztmin);
+        let tmax = xtmax.min(ytmax).min(ztmax);
+
+        if tmin > tmax {
+            return false;
+        }
+        true
+    }
+
+    pub fn check_axis(min_axis: f64, max_axis: f64, origin: f64, direction: f64) -> (f64, f64) {
+        let tmin_numerator = min_axis - origin;
+        let tmax_numerator = max_axis - origin;
+
+        let (mut tmin, mut tmax) = if direction.abs() >= EPSILON {
+            (tmin_numerator / direction, tmax_numerator / direction)
+        } else {
+            (tmin_numerator * INFINITY, tmax_numerator * INFINITY)
+        };
+
+        if tmin > tmax {
+            std::mem::swap(&mut tmin, &mut tmax);
+        }
+        (tmin, tmax)
     }
 }
 
