@@ -1,3 +1,4 @@
+use std::f64::INFINITY;
 use std::sync::Arc;
 
 use super::{Shape, next_shape_id};
@@ -13,6 +14,7 @@ pub struct Group {
     pub children: Vec<Arc<dyn Shape + Send + Sync>>,
     pub transfom: SqMatrix<4>,
     pub inverse: SqMatrix<4>,
+    pub bounds: Bounds
 }
 
 impl Group {
@@ -22,7 +24,9 @@ impl Group {
             children: Vec::new(),
             transfom: Matrix::eye(),
             inverse: Matrix::eye(),
+            bounds: Bounds::new(Vec4::point(-INFINITY, -INFINITY,-INFINITY), Vec4::point(INFINITY, INFINITY, INFINITY))
         }
+        
     }
     pub fn add_child(&mut self, mut shape: Arc<dyn Shape + Send + Sync>) {
         let combined = &self.transfom * shape.transform();
@@ -30,6 +34,19 @@ impl Group {
             Arc::get_mut(&mut shape).expect("Shape Arc was already cloned; add it only once");
         shape_mut.set_transformation(combined);
         self.children.push(shape);
+        self.update_bounds();
+    }
+
+    pub fn add_child_without_bounds(&mut self, mut shape: Arc<dyn Shape + Send + Sync>) {
+        let combined = &self.transfom * shape.transform();
+        let shape_mut =
+            Arc::get_mut(&mut shape).expect("Shape Arc was already cloned; add it only once");
+        shape_mut.set_transformation(combined);
+        self.children.push(shape);
+    }
+
+    pub fn update_bounds(&mut self) {
+        self.bounds = self.bounds();
     }
 }
 
@@ -88,6 +105,7 @@ impl Shape for Group {
         }
         self.transfom = mat.clone();
         self.inverse = mat.inverse();
+        self.update_bounds();
     }
 
     fn transform(&self) -> &SqMatrix<4> {
@@ -96,7 +114,7 @@ impl Shape for Group {
 
     fn intersect<'a>(&'a self, ray: &Ray) -> Vec<Intersection<'a>> {
         let mut xs = Vec::new();
-        if !self.bounds().intersection(&ray) {
+        if !self.bounds.intersection(&ray) {
             return vec![];
         }
         for child in &self.children {
