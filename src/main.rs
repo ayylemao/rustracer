@@ -1,14 +1,15 @@
 use raytracer::{
+    Sphere,
     camera::Camera,
     color::Color,
     light::PointLight,
     material::Material,
     matrix::Matrix,
     obj_parser::Parser,
-    patterns::{checker::Checker, Pattern},
-    shapes::{cube::Cube, plane::Plane, Shape},
+    patterns::{Pattern, checker::Checker},
+    shapes::{Shape, cube::Cube, plane::Plane},
     vec4::Vec4,
-    world::World, Sphere,
+    world::World,
 };
 use std::{f64::consts::PI, sync::Arc};
 
@@ -21,8 +22,11 @@ fn main() {
     tmat.reflective = 0.8;
     tmat.set_color(Color::orange());
     teapot.set_material(tmat);
-    teapot.set_transformation(Matrix::translation(-4.0, 0.0, 3.0) * Matrix::rotation_x(-PI/2.0) * Matrix::scaling(0.4, 0.4, 0.4));
-
+    teapot.set_transformation(
+        Matrix::translation(-4.0, 0.0, 3.0)
+            * Matrix::rotation_x(-PI / 2.0)
+            * Matrix::scaling(0.4, 0.4, 0.4),
+    );
 
     let mut floor = Plane::new();
     let mut mat = Material::default();
@@ -31,14 +35,14 @@ fn main() {
     pat.set_transformation(Matrix::scaling(5.0, 5.0, 5.0));
     mat.set_pattern(pat);
     floor.set_material(mat);
-    
+
     let mut world: World = World::new(PointLight {
         position: Vec4::point(-10.0, 20.0, -10.0),
         intensity: Color::white(),
     });
 
     let mut s = Cube::new();
-    s.set_transformation( Matrix::translation(-3.0, 1.0, -3.0) * Matrix::rotation_y(PI/3.0));
+    s.set_transformation(Matrix::translation(-3.0, 1.0, -3.0) * Matrix::rotation_y(PI / 3.0));
     s.material.reflective = 0.9;
     s.material.color = Color::red();
 

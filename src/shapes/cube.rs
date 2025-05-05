@@ -1,10 +1,10 @@
 use std::f64::INFINITY;
-use std::mem::swap;
 
 use super::{Shape, next_shape_id};
+use crate::bounds::Bounds;
 use crate::intersection::Intersection;
 use crate::material::Material;
-use crate::math::{ApproxEq, EPSILON};
+use crate::math::EPSILON;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
 use crate::vec4::Vec4;
@@ -15,16 +15,19 @@ pub struct Cube {
     pub transform: SqMatrix<4>,
     pub material: Material,
     pub inverse: SqMatrix<4>,
+    pub bounds: Bounds,
 }
 
 impl Cube {
     pub fn new() -> Cube {
         let id = next_shape_id();
+
         Cube {
             id,
             transform: Matrix::eye(),
             material: Material::default(),
             inverse: Matrix::eye(),
+            bounds: Bounds::new(Vec4::point(-1.0, -1.0, -1.0), Vec4::point(1.0, 1.0, 1.0)),
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
@@ -34,6 +37,7 @@ impl Cube {
             transform: mat.clone(),
             material: Material::default(),
             inverse: mat.inverse(),
+            bounds: Bounds::new(Vec4::point(-1.0, -1.0, -1.0), Vec4::point(1.0, 1.0, 1.0)),
         }
     }
 
@@ -44,8 +48,7 @@ impl Cube {
         let (mut tmin, mut tmax) = if direction.abs() >= EPSILON {
             (tmin_numerator / direction, tmax_numerator / direction)
         } else {
-            (tmin_numerator * INFINITY,
-            tmax_numerator * INFINITY)
+            (tmin_numerator * INFINITY, tmax_numerator * INFINITY)
         };
 
         if tmin > tmax {
@@ -68,7 +71,10 @@ impl Shape for Cube {
             return vec![];
         }
 
-        vec![Intersection::new(tmin, self, None, None), Intersection::new(tmax, self, None, None)]
+        vec![
+            Intersection::new(tmin, self, None, None),
+            Intersection::new(tmax, self, None, None),
+        ]
     }
 
     fn local_normal_at(&self, local_point: Vec4, _i: &Intersection) -> Vec4 {
@@ -76,7 +82,7 @@ impl Shape for Cube {
         let abs_y = local_point.y.abs();
         let abs_z = local_point.z.abs();
         let maxc = abs_x.max(abs_y).max(abs_z);
-    
+
         if maxc == abs_x {
             Vec4::vector(local_point.x.signum(), 0.0, 0.0)
         } else if maxc == abs_y {
@@ -114,6 +120,14 @@ impl Shape for Cube {
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
+
+    fn bounds(&self) -> crate::bounds::Bounds {
+        self.bounds
+    }
+
+    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
+        self
+    }
 }
 
 #[cfg(test)]
@@ -130,14 +144,14 @@ pub mod tests {
     fn test_ray_cube_intersections() {
         use crate::ray::Ray;
         use crate::vec4::Vec4;
-    
+
         struct TestCase {
             origin: Vec4,
             direction: Vec4,
             t1: f64,
             t2: f64,
         }
-    
+
         let cases = vec![
             TestCase {
                 origin: Vec4::point(5.0, 0.5, 0.0),
@@ -182,14 +196,26 @@ pub mod tests {
                 t2: 1.0,
             },
         ];
-    
+
         for (i, case) in cases.into_iter().enumerate() {
             let cube = Cube::new();
             let ray = Ray::from_vec4(case.origin, case.direction);
             let xs = cube.local_intersect(&ray);
             assert_eq!(xs.len(), 2, "Case {} failed: expected 2 intersections", i);
-            assert!((xs[0].t - case.t1).abs() < 1e-5, "Case {} failed: xs[0].t = {}, expected {}", i, xs[0].t, case.t1);
-            assert!((xs[1].t - case.t2).abs() < 1e-5, "Case {} failed: xs[1].t = {}, expected {}", i, xs[1].t, case.t2);
+            assert!(
+                (xs[0].t - case.t1).abs() < 1e-5,
+                "Case {} failed: xs[0].t = {}, expected {}",
+                i,
+                xs[0].t,
+                case.t1
+            );
+            assert!(
+                (xs[1].t - case.t2).abs() < 1e-5,
+                "Case {} failed: xs[1].t = {}, expected {}",
+                i,
+                xs[1].t,
+                case.t2
+            );
         }
     }
     #[test]
@@ -245,12 +271,12 @@ pub mod tests {
     #[test]
     fn test_cube_normals() {
         use crate::vec4::Vec4;
-    
+
         struct TestCase {
             point: Vec4,
             expected_normal: Vec4,
         }
-    
+
         let cases = vec![
             TestCase {
                 point: Vec4::point(1.0, 0.5, -0.8),
@@ -285,21 +311,20 @@ pub mod tests {
                 expected_normal: Vec4::vector(-1.0, 0.0, 0.0),
             },
         ];
-    
+
         let cube = Cube::new();
         let dummy: Arc<dyn Shape + Send + Sync> = Arc::new(Sphere::new());
 
         for (i, case) in cases.into_iter().enumerate() {
-            let normal = cube.local_normal_at(case.point, &Intersection::new(0.0, dummy.as_ref(), None, None));
+            let normal = cube.local_normal_at(
+                case.point,
+                &Intersection::new(0.0, dummy.as_ref(), None, None),
+            );
             assert_eq!(
-                normal,
-                case.expected_normal,
+                normal, case.expected_normal,
                 "Failed case {}: expected {:?}, got {:?}",
-                i,
-                case.expected_normal,
-                normal
+                i, case.expected_normal, normal
             );
         }
     }
-    
 }

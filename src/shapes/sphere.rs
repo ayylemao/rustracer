@@ -1,4 +1,5 @@
 use super::{Shape, next_shape_id};
+use crate::bounds::Bounds;
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
@@ -11,9 +12,16 @@ pub struct Sphere {
     pub transform: SqMatrix<4>,
     pub material: Material,
     pub inverse: SqMatrix<4>,
+    pub bounds: Bounds,
 }
 
 impl Sphere {
+    pub fn get_bounds() -> Bounds {
+        let bounds_min = Vec4::point(-1.0, -1.0, -1.0);
+        let bounds_max = Vec4::point(1.0, 1.0, 1.0);
+        Bounds::new(bounds_min, bounds_max)
+    }
+
     pub fn new() -> Sphere {
         let id = next_shape_id();
         Sphere {
@@ -21,6 +29,7 @@ impl Sphere {
             transform: Matrix::eye(),
             material: Material::default(),
             inverse: Matrix::eye(),
+            bounds: Sphere::get_bounds(),
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
@@ -30,6 +39,7 @@ impl Sphere {
             transform: mat.clone(),
             material: Material::default(),
             inverse: mat.inverse(),
+            bounds: Sphere::get_bounds(),
         }
     }
     pub fn glas(refractive_index: f64) -> Sphere {
@@ -41,6 +51,7 @@ impl Sphere {
             transform: Matrix::eye(),
             material: m1,
             inverse: Matrix::eye(),
+            bounds: Sphere::get_bounds(),
         }
     }
 }
@@ -94,6 +105,14 @@ impl Shape for Sphere {
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn bounds(&self) -> crate::bounds::Bounds {
+        self.bounds
+    }
+
+    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
         self
     }
 }

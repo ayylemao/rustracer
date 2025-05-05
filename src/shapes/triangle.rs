@@ -1,5 +1,6 @@
 use super::{Shape, next_shape_id};
 use crate::{
+    bounds::Bounds,
     intersection::Intersection,
     material::Material,
     math::EPSILON,
@@ -19,10 +20,22 @@ pub struct Triangle {
     pub e2: Vec4,
     pub normal: Vec4,
     pub inverse: SqMatrix<4>,
+    pub bounds: Bounds,
 }
 
 impl Triangle {
     pub fn new(p1: Vec4, p2: Vec4, p3: Vec4) -> Self {
+        let min_x = p1.x.min(p2.x).min(p3.x);
+        let min_y = p1.y.min(p2.y).min(p3.y);
+        let min_z = p1.z.min(p2.z).min(p3.z);
+
+        let max_x = p1.x.max(p2.x).max(p3.x);
+        let max_y = p1.y.max(p2.y).max(p3.y);
+        let max_z = p1.z.max(p2.z).max(p3.z);
+
+        let bounds_min = Vec4::point(min_x, min_y, min_z);
+        let bounds_max = Vec4::point(max_x, max_y, max_z);
+        let bounds = Bounds::new(bounds_min, bounds_max);
         let e1 = p2 - p1;
         let e2 = p3 - p1;
         let normal = e2.cross(&e1).norm();
@@ -37,6 +50,7 @@ impl Triangle {
             e2,
             normal,
             inverse: Matrix::eye(),
+            bounds,
         }
     }
 }
@@ -105,6 +119,14 @@ impl Shape for Triangle {
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
+
+    fn bounds(&self) -> crate::bounds::Bounds {
+        self.bounds
+    }
+
+    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
+        self
+    }
 }
 
 #[cfg(test)]
@@ -123,7 +145,7 @@ pub mod tests {
     //    assert_eq!(t.e1, Vec4::vector(-1.0, -1.0, 0.0));
     //    assert_eq!(t.e2, Vec4::vector(1.0, -1.0, 0.0));
     //    assert_eq!(t.normal, Vec4::vector(0.0, 0.0, -1.0));
-    //    
+    //
 
     //    let n1 = t.local_normal_at(Vec4::point(-0.5, 0.75, 0.0));
     //    assert_eq!(n1, t.normal);

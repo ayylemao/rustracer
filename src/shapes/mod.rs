@@ -1,18 +1,19 @@
+use crate::bounds::Bounds;
 use crate::intersection::Intersection;
 use crate::material::Material;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
 use crate::vec4::Vec4;
+use std::any::Any;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::any::Any;
 
+pub mod cube;
 pub mod group;
 pub mod plane;
+pub mod smooth_triangle;
 pub mod sphere;
 pub mod triangle;
-pub mod smooth_triangle;
-pub mod cube;
 
 static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -41,4 +42,6 @@ pub trait Shape: Debug + Sync + Send + Any {
     fn id(&self) -> usize;
     fn inverse(&self) -> &Matrix<4, 4>;
     fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) ->  &mut dyn Any;
+    fn bounds(&self) -> Bounds;
 }

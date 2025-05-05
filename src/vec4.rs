@@ -88,7 +88,12 @@ impl Div<Vec4> for Vec4 {
     type Output = Vec4;
 
     fn div(self, rhs: Vec4) -> Vec4 {
-        Vec4::new(self.x / rhs.x, self.y / rhs.y, self.z / rhs.z, self.w / rhs.w)
+        Vec4::new(
+            self.x / rhs.x,
+            self.y / rhs.y,
+            self.z / rhs.z,
+            self.w / rhs.w,
+        )
     }
 }
 

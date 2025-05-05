@@ -6,20 +6,20 @@ use std::{
 };
 
 use crate::{
-    shapes::{group::Group, smooth_triangle::SmoothTriangle, triangle::Triangle, Shape},
+    shapes::{Shape, group::Group, smooth_triangle::SmoothTriangle, triangle::Triangle},
     vec4::Vec4,
 };
 
 struct FaceIndex {
     vertex_index: usize,
-    normal_index: Option<usize>
+    normal_index: Option<usize>,
 }
 
 pub struct Parser {
     pub vertices: Vec<Vec4>,
     pub groups: HashMap<String, Group>,
     pub current_group: Option<String>,
-    pub normals: Vec<Vec4>
+    pub normals: Vec<Vec4>,
 }
 
 impl Parser {
@@ -31,7 +31,7 @@ impl Parser {
             vertices: vertices,
             groups: groups,
             current_group: None,
-            normals: Vec::new()
+            normals: Vec::new(),
         }
     }
 
@@ -66,7 +66,7 @@ impl Parser {
             } else if line.starts_with("f ") {
                 let parts = line.split_whitespace().skip(1);
                 let mut face_entry: Vec<FaceIndex> = Vec::new();
-            
+
                 for part in parts {
                     let tokens: Vec<&str> = part.split('/').collect();
                     let v = tokens[0].parse::<usize>().unwrap();
@@ -111,22 +111,24 @@ impl Parser {
         let mut triangles: Vec<Arc<dyn Shape>> = Vec::new();
         let p1 = self.vertices[indices[0].vertex_index];
         let n1 = indices[0].normal_index.map(|i| self.normals[i]);
-    
+
         for i in 1..(indices.len() - 1) {
             let p2 = self.vertices[indices[i].vertex_index];
             let p3 = self.vertices[indices[i + 1].vertex_index];
-    
+
             let n2 = indices[i].normal_index.map(|i| self.normals[i]);
             let n3 = indices[i + 1].normal_index.map(|i| self.normals[i]);
-    
+
             let tri: Arc<dyn Shape> = match (n1, n2, n3) {
-                (Some(n1), Some(n2), Some(n3)) => Arc::new(SmoothTriangle::new(p1, p2, p3, n1, n2, n3)),
+                (Some(n1), Some(n2), Some(n3)) => {
+                    Arc::new(SmoothTriangle::new(p1, p2, p3, n1, n2, n3))
+                }
                 //(Some(n1), Some(n2), Some(n3)) => Arc::new(Triangle::new(p1, p2, p3)),
                 _ => Arc::new(Triangle::new(p1, p2, p3)),
             };
             triangles.push(tri);
         }
-    
+
         triangles
     }
 }
@@ -142,9 +144,9 @@ impl Parser {
 //    #[test]
 //    fn triangulation() {
 //        let mut p = Parser::new();
-//        
+//
 //        let g = p.parse_file("objects/test_files/obj1.obj");
-//        
+//
 //        let g_internal = g.children[0].as_ref().as_any().downcast_ref::<Group>().unwrap();
 //        let t1 = g_internal.children[0].as_any().downcast_ref::<Triangle>().unwrap();
 //        let t2 = g_internal.children[1].as_any().downcast_ref::<Triangle>().unwrap();

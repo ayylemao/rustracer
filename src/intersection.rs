@@ -73,7 +73,7 @@ pub struct Intersection<'a> {
     pub t: f64,
     pub object: &'a dyn Shape,
     pub u: Option<f64>,
-    pub v: Option<f64>
+    pub v: Option<f64>,
 }
 
 impl Intersection<'_> {

@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
 use super::{Shape, next_shape_id};
+use crate::bounds::Bounds;
 use crate::intersection::Intersection;
 use crate::matrix::{Matrix, SqMatrix};
 use crate::ray::Ray;
+use crate::vec4::Vec4;
 
 #[derive(Debug)]
 pub struct Group {
@@ -43,7 +45,11 @@ impl Shape for Group {
         panic!("local_intersect should never be called on a Group")
     }
 
-    fn local_normal_at(&self, _local_point: crate::vec4::Vec4, _i: &Intersection) -> crate::vec4::Vec4 {
+    fn local_normal_at(
+        &self,
+        _local_point: crate::vec4::Vec4,
+        _i: &Intersection,
+    ) -> crate::vec4::Vec4 {
         panic!("local_normal_at should never be called on a Group");
     }
 
@@ -69,12 +75,17 @@ impl Shape for Group {
         let delta = new_group * old_group.inverse();
 
         for child in &mut self.children {
-            let new_child_transform = &delta * child.transform();
             let child_mut = Arc::get_mut(child)
                 .expect("Child Arc was cloned elsewhere; ensure unique ownership");
-            child_mut.set_transformation(new_child_transform);
-        }
 
+            if let Some(group) = child_mut.as_any_mut().downcast_mut::<Group>() {
+                group.set_transformation(delta.clone());
+            } else {
+                let child_transform = child_mut.transform();
+                let new_child_transform = &delta * child_transform;
+                child_mut.set_transformation(new_child_transform);
+            }
+        }
         self.transfom = mat.clone();
         self.inverse = mat.inverse();
     }
@@ -97,6 +108,43 @@ impl Shape for Group {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+
+    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
+        self
+    }
+
+    fn bounds(&self) -> crate::bounds::Bounds {
+        let mut x_min = f64::INFINITY;
+        let mut y_min = f64::INFINITY;
+        let mut z_min = f64::INFINITY;
+        let mut x_max = f64::NEG_INFINITY;
+        let mut y_max = f64::NEG_INFINITY;
+        let mut z_max = f64::NEG_INFINITY;
+    
+        for child in &self.children {
+            let b = if child.as_any().is::<Group>() {
+                child.bounds()
+            } else {
+                child.bounds().transform(child.transform())
+            };
+    
+            if !b.is_finite() {
+                continue;
+            }
+    
+            x_min = x_min.min(b.min.x);
+            y_min = y_min.min(b.min.y);
+            z_min = z_min.min(b.min.z);
+            x_max = x_max.max(b.max.x);
+            y_max = y_max.max(b.max.y);
+            z_max = z_max.max(b.max.z);
+        }
+    
+        Bounds::new(
+            Vec4::point(x_min, y_min, z_min),
+            Vec4::point(x_max, y_max, z_max),
+        )
     }
 }
 

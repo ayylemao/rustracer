@@ -250,6 +250,7 @@ pub mod tests {
             transform: Matrix::eye(),
             material: mat1,
             inverse: Matrix::eye(),
+            bounds: Sphere::get_bounds(),
         };
         let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
@@ -259,6 +260,7 @@ pub mod tests {
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
             inverse: Matrix::scaling(0.5, 0.5, 0.5).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         let s2 = Arc::new(s2);
 
@@ -295,6 +297,7 @@ pub mod tests {
             transform: Matrix::eye(),
             material: mat1,
             inverse: Matrix::eye(),
+            bounds: Sphere::get_bounds(),
         };
         let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
@@ -304,6 +307,7 @@ pub mod tests {
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
             inverse: Matrix::scaling(0.5, 0.5, 0.5).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         let s2 = Arc::new(s2);
 
@@ -317,6 +321,7 @@ pub mod tests {
             material: mat3,
             transform: Matrix::translation(0.0, -1.0, 0.0),
             inverse: Matrix::translation(0.0, -1.0, 0.0).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         world.add_shape(Arc::new(plane));
 
@@ -350,6 +355,7 @@ pub mod tests {
             transform: Matrix::eye(),
             material: mat1,
             inverse: Matrix::eye(),
+            bounds: Sphere::get_bounds(),
         };
         let s1 = Arc::new(s1);
         let mut mat2 = Material::default();
@@ -359,6 +365,7 @@ pub mod tests {
             material: mat2,
             transform: Matrix::scaling(0.5, 0.5, 0.5),
             inverse: Matrix::scaling(0.5, 0.5, 0.5).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         let s2 = Arc::new(s2);
 
@@ -372,6 +379,7 @@ pub mod tests {
             material: mat3,
             transform: Matrix::translation(0.0, -1.0, 0.0),
             inverse: Matrix::translation(0.0, -1.0, 0.0).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         world.add_shape(Arc::new(plane));
 
@@ -398,6 +406,7 @@ pub mod tests {
             transform: Matrix::translation(0.0, -1.0, 0.0),
             material: mat1,
             inverse: Matrix::translation(0.0, -1.0, 0.0).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         world.add_shape(Arc::new(lower));
 
@@ -408,6 +417,7 @@ pub mod tests {
             transform: Matrix::translation(0.0, 1.0, 0.0),
             material: mat2,
             inverse: Matrix::translation(0.0, 1.0, 0.0).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         world.add_shape(Arc::new(higher));
 
@@ -426,6 +436,7 @@ pub mod tests {
             material: mat3,
             transform: Matrix::translation(0.0, -1.0, 0.0),
             inverse: Matrix::translation(0.0, -1.0, 0.0).inverse(),
+            bounds: Sphere::get_bounds(),
         };
         world.add_shape(Arc::new(plane));
 

@@ -1,5 +1,8 @@
+use std::f64::INFINITY;
+
 use super::{Shape, next_shape_id};
 use crate::{
+    bounds::Bounds,
     intersection::Intersection,
     material::Material,
     math::EPSILON,
@@ -13,6 +16,7 @@ pub struct Plane {
     pub transform: SqMatrix<4>,
     pub material: Material,
     pub inverse: SqMatrix<4>,
+    pub bounds: Bounds,
 }
 
 impl Plane {
@@ -23,6 +27,10 @@ impl Plane {
             transform: Matrix::eye(),
             material: Material::default(),
             inverse: Matrix::eye(),
+            bounds: Bounds::new(
+                Vec4::point(-INFINITY, 0.0, -INFINITY),
+                Vec4::point(INFINITY, 0.0, INFINITY),
+            ),
         }
     }
     pub fn with_transformation(mat: Matrix<4, 4>) -> Self {
@@ -32,6 +40,10 @@ impl Plane {
             transform: mat.clone(),
             material: Material::default(),
             inverse: mat.inverse(),
+            bounds: Bounds::new(
+                Vec4::point(-INFINITY, 0.0, -INFINITY),
+                Vec4::point(INFINITY, 0.0, INFINITY),
+            ),
         }
     }
 }
@@ -50,7 +62,11 @@ impl Shape for Plane {
         }
     }
 
-    fn local_normal_at(&self, _local_point: crate::vec4::Vec4, _i: &Intersection) -> crate::vec4::Vec4 {
+    fn local_normal_at(
+        &self,
+        _local_point: crate::vec4::Vec4,
+        _i: &Intersection,
+    ) -> crate::vec4::Vec4 {
         Vec4::vector(0.0, 1.0, 0.0)
     }
 
@@ -80,6 +96,14 @@ impl Shape for Plane {
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn bounds(&self) -> crate::bounds::Bounds {
+        self.bounds
+    }
+
+    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
         self
     }
 }

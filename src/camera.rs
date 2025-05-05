@@ -108,9 +108,6 @@ impl Camera {
             .install(|| {
                 pixels.into_par_iter().map(|(x, y)| {
                     let ray = self.ray_for_pixel(x, y);
-                    if x == 5 && y == 5 {
-                        println!("");
-                    }
                     let color = world.color_at(&ray, self.reflection_max);
                     bar.inc(1);
                     ((x, y), color)
