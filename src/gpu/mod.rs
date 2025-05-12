@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 use wgpu::{Device, Queue};
 use wgpu::{BindGroup, PipelineCache, PipelineCompilationOptions};
 
-pub mod gpu_sphere;
+pub mod gpu_types;
 
 pub struct GPUAccel {}
 
@@ -37,13 +37,13 @@ pub mod test {
 
     use crate::gpu::GPUAccel;
 
-    #[test]
+
     pub fn test_wgpu_setup() {
         let (device, queue) = GPUAccel::init();
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Test Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("test.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

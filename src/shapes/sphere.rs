@@ -42,7 +42,7 @@ impl Sphere {
             bounds: Sphere::get_bounds(),
         }
     }
-    pub fn glas(refractive_index: f64) -> Sphere {
+    pub fn glas(refractive_index: f32) -> Sphere {
         let id = next_shape_id();
         let mut m1 = Material::glas();
         m1.refractive_index = refractive_index;
@@ -119,7 +119,7 @@ impl Shape for Sphere {
 
 #[cfg(test)]
 pub mod tests {
-    //use std::f64::consts::PI;
+    //use std::f32::consts::PI;
 
     use super::*;
 
@@ -158,17 +158,17 @@ pub mod tests {
     //fn normal_at() {
     //    let s = Sphere::new();
     //    let at = Vec4::point(
-    //        3.0f64.sqrt() / 3.0,
-    //        3.0f64.sqrt() / 3.0,
-    //        3.0f64.sqrt() / 3.0,
+    //        3.0f32.sqrt() / 3.0,
+    //        3.0f32.sqrt() / 3.0,
+    //        3.0f32.sqrt() / 3.0,
     //    );
     //    let n = s.normal_at(at);
     //    assert_eq!(
     //        n,
     //        Vec4::vector(
-    //            3.0f64.sqrt() / 3.0,
-    //            3.0f64.sqrt() / 3.0,
-    //            3.0f64.sqrt() / 3.0
+    //            3.0f32.sqrt() / 3.0,
+    //            3.0f32.sqrt() / 3.0,
+    //            3.0f32.sqrt() / 3.0
     //        )
     //    );
     //}
@@ -181,7 +181,7 @@ pub mod tests {
 
     //    let mut s = Sphere::new();
     //    s.set_transformation(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(PI / 5.0));
-    //    let n = s.normal_at(Vec4::point(0.0, 2.0f64.sqrt() / 2.0, -2.0f64.sqrt() / 2.0));
+    //    let n = s.normal_at(Vec4::point(0.0, 2.0f32.sqrt() / 2.0, -2.0f32.sqrt() / 2.0));
     //    assert_eq!(n, Vec4::vector(0.0, 0.97014, -0.24254));
     //}
 }

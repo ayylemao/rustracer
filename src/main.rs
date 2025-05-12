@@ -11,7 +11,7 @@ use raytracer::{
     vec4::Vec4,
     world::World,
 };
-use std::{f64::consts::PI, sync::Arc};
+use std::{f32::consts::PI, sync::Arc};
 
 const WIDTH: usize = 1600;
 const HEIGHT: usize = 800;

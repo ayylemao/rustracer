@@ -1,4 +1,4 @@
-use std::f64::INFINITY;
+use std::f32::INFINITY;
 
 use super::{Shape, next_shape_id};
 use crate::{

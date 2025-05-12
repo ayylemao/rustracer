@@ -48,16 +48,16 @@ impl Parser {
             if line.starts_with("v ") {
                 let mut parts = line.split_whitespace().into_iter();
                 let _prefix = parts.next().unwrap();
-                let x = (parts.next().unwrap()).parse::<f64>().unwrap();
-                let y = (parts.next().unwrap()).parse::<f64>().unwrap();
-                let z = (parts.next().unwrap()).parse::<f64>().unwrap();
+                let x = (parts.next().unwrap()).parse::<f32>().unwrap();
+                let y = (parts.next().unwrap()).parse::<f32>().unwrap();
+                let z = (parts.next().unwrap()).parse::<f32>().unwrap();
                 self.vertices.push(Vec4::point(x, y, z));
             } else if line.starts_with("vn ") {
                 let mut parts = line.split_whitespace().into_iter();
                 let _prefix = parts.next().unwrap();
-                let x = (parts.next().unwrap()).parse::<f64>().unwrap();
-                let y = (parts.next().unwrap()).parse::<f64>().unwrap();
-                let z = (parts.next().unwrap()).parse::<f64>().unwrap();
+                let x = (parts.next().unwrap()).parse::<f32>().unwrap();
+                let y = (parts.next().unwrap()).parse::<f32>().unwrap();
+                let z = (parts.next().unwrap()).parse::<f32>().unwrap();
                 self.normals.push(Vec4::vector(x, y, z));
             } else if line.starts_with("g ") {
                 let name = line[2..].trim().to_string();

@@ -15,7 +15,7 @@ impl PartialEq for Ray {
 }
 
 impl Ray {
-    pub fn new(x: f64, y: f64, z: f64, dx: f64, dy: f64, dz: f64) -> Self {
+    pub fn new(x: f32, y: f32, z: f32, dx: f32, dy: f32, dz: f32) -> Self {
         Ray {
             origin: Vec4::point(x, y, z),
             direction: Vec4::vector(dx, dy, dz),
@@ -24,7 +24,7 @@ impl Ray {
     pub fn from_vec4(origin: Vec4, direction: Vec4) -> Self {
         Ray { origin, direction }
     }
-    pub fn position(&self, t: f64) -> Vec4 {
+    pub fn position(&self, t: f32) -> Vec4 {
         self.origin + self.direction * t
     }
     pub fn transform(&self, mat: &SqMatrix<4>) -> Ray {

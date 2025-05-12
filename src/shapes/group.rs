@@ -1,4 +1,4 @@
-use std::f64::INFINITY;
+use std::f32::INFINITY;
 use std::sync::Arc;
 
 use super::{Shape, next_shape_id};
@@ -138,12 +138,12 @@ impl Shape for Group {
     }
 
     fn bounds(&self) -> crate::bounds::Bounds {
-        let mut x_min = f64::INFINITY;
-        let mut y_min = f64::INFINITY;
-        let mut z_min = f64::INFINITY;
-        let mut x_max = f64::NEG_INFINITY;
-        let mut y_max = f64::NEG_INFINITY;
-        let mut z_max = f64::NEG_INFINITY;
+        let mut x_min = f32::INFINITY;
+        let mut y_min = f32::INFINITY;
+        let mut z_min = f32::INFINITY;
+        let mut x_max = f32::NEG_INFINITY;
+        let mut y_max = f32::NEG_INFINITY;
+        let mut z_max = f32::NEG_INFINITY;
 
         for child in &self.children {
             let b = if child.as_any().is::<Group>() {

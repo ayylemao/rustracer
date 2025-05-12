@@ -5,10 +5,10 @@ use crate::math::ApproxEq;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec4 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-    pub w: f64,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
 }
 
 impl PartialEq for Vec4 {
@@ -76,7 +76,7 @@ impl SubAssign for Vec4 {
     }
 }
 
-impl Sub<Vec4> for f64 {
+impl Sub<Vec4> for f32 {
     type Output = Vec4;
 
     fn sub(self, rhs: Vec4) -> Vec4 {
@@ -116,7 +116,7 @@ where
 {
     type Output = Vec4;
     fn mul(self, rhs: I) -> Self::Output {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         let result = Vec4 {
             x: self.x * scalar,
             y: self.y * scalar,
@@ -131,7 +131,7 @@ where
     I: ToPrimitive + Copy,
 {
     fn mul_assign(&mut self, rhs: I) {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         self.x *= scalar;
         self.y *= scalar;
         self.z *= scalar;
@@ -145,7 +145,7 @@ where
 {
     type Output = Vec4;
     fn div(self, rhs: I) -> Self::Output {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         let result = Vec4 {
             x: self.x / scalar,
             y: self.y / scalar,
@@ -161,7 +161,7 @@ where
     I: ToPrimitive + Copy,
 {
     fn div_assign(&mut self, rhs: I) {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         self.x /= scalar;
         self.y /= scalar;
         self.z /= scalar;
@@ -170,10 +170,10 @@ where
 }
 
 impl Vec4 {
-    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w: w }
     }
-    pub fn from_array(array: [f64; 4]) -> Self {
+    pub fn from_array(array: [f32; 4]) -> Self {
         Self {
             x: array[0],
             y: array[1],
@@ -181,13 +181,13 @@ impl Vec4 {
             w: array[3],
         }
     }
-    pub fn point(x: f64, y: f64, z: f64) -> Self {
+    pub fn point(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z, w: 1.0 }
     }
-    pub fn vector(x: f64, y: f64, z: f64) -> Self {
+    pub fn vector(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z, w: 0.0 }
     }
-    pub fn magnitude(self) -> f64 {
+    pub fn magnitude(self) -> f32 {
         (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0) + self.w.powf(2.0)).sqrt()
     }
     pub fn norm(self) -> Vec4 {
@@ -196,7 +196,7 @@ impl Vec4 {
     pub fn norm_mut(&mut self) {
         *self /= self.magnitude();
     }
-    pub fn dot(self, rhs: &Vec4) -> f64 {
+    pub fn dot(self, rhs: &Vec4) -> f32 {
         //debug_assert!(
         //    (self.w == 0.0 && rhs.w == 0.0),
         //    "Cannot take dot product of non-vectors!"
@@ -288,9 +288,9 @@ mod tests {
         let t1 = Vec4::vector(0.0, 1.0, 0.0);
         assert_eq!(t1.magnitude(), 1.0);
         let t1 = Vec4::vector(1.0, 2.0, 3.0);
-        assert_eq!(t1.magnitude(), 14.0f64.sqrt());
+        assert_eq!(t1.magnitude(), 14.0f32.sqrt());
         let t1 = Vec4::vector(-1.0, -2.0, -3.0);
-        assert_eq!(t1.magnitude(), 14.0f64.sqrt());
+        assert_eq!(t1.magnitude(), 14.0f32.sqrt());
     }
     #[test]
     fn norm() {
@@ -326,7 +326,7 @@ mod tests {
         let n = Vec4::vector(0.0, 1.0, 0.0);
         assert_eq!(v.reflect(&n), Vec4::vector(1.0, 1.0, 0.0));
         let v = Vec4::vector(0.0, -1.0, 0.0);
-        let n = Vec4::vector(2.0f64.sqrt() / 2.0, 2.0f64.sqrt() / 2.0, 0.0);
+        let n = Vec4::vector(2.0f32.sqrt() / 2.0, 2.0f32.sqrt() / 2.0, 0.0);
         assert_eq!(v.reflect(&n), Vec4::vector(1.0, 0.0, 0.0));
     }
 }

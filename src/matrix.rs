@@ -8,7 +8,7 @@ pub type SqMatrix<const N: usize> = Matrix<N, N>;
 
 #[derive(Debug, Clone)]
 pub struct Matrix<const ROWS: usize, const COLS: usize> {
-    data: Vec<f64>,
+    data: Vec<f32>,
 }
 
 impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> {
@@ -20,7 +20,7 @@ impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> {
             data: vec![0.0; total],
         }
     }
-    pub fn from_array(array: [[f64; COLS]; ROWS]) -> Self {
+    pub fn from_array(array: [[f32; COLS]; ROWS]) -> Self {
         let mut mat: Matrix<ROWS, COLS> = Matrix::new();
         for row in 0..ROWS {
             for col in 0..COLS {
@@ -70,14 +70,14 @@ impl Matrix<4, 4> {
         }
         result
     }
-    fn cofactor(&self, row: usize, col: usize) -> f64 {
+    fn cofactor(&self, row: usize, col: usize) -> f32 {
         let minor = self.submatrix(row, col).det();
         if (row + col) % 2 == 0 {
             return minor;
         }
         -minor
     }
-    pub fn det(&self) -> f64 {
+    pub fn det(&self) -> f32 {
         let mut det = 0.0;
         for col in 0..4 {
             det += self[(0, col)] * self.cofactor(0, col);
@@ -122,18 +122,18 @@ impl Matrix<3, 3> {
         result
     }
 
-    fn minor(&self, row: usize, col: usize) -> f64 {
+    fn minor(&self, row: usize, col: usize) -> f32 {
         self.submatrix(row, col).det()
     }
 
-    fn cofactor(&self, row: usize, col: usize) -> f64 {
+    fn cofactor(&self, row: usize, col: usize) -> f32 {
         if row + col % 2 == 0 {
             return self.minor(row, col);
         }
         -self.minor(row, col)
     }
 
-    pub fn det(&self) -> f64 {
+    pub fn det(&self) -> f32 {
         let mut det = 0.0;
         for col in 0..3 {
             det += self[(0, col)] * self.cofactor(0, col);
@@ -143,13 +143,13 @@ impl Matrix<3, 3> {
 }
 
 impl Matrix<2, 2> {
-    pub fn det(&self) -> f64 {
+    pub fn det(&self) -> f32 {
         self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)]
     }
 }
 
 impl<const ROWS: usize, const COLS: usize> Index<(usize, usize)> for Matrix<ROWS, COLS> {
-    type Output = f64;
+    type Output = f32;
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
         debug_assert!(row < ROWS && col < COLS, "Index out of bounds");
         &self.data[row * COLS + col]
@@ -251,7 +251,7 @@ where
 {
     type Output = Matrix<ROWS, COLS>;
     fn mul(self, rhs: I) -> Self::Output {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         let mut result = Matrix::<ROWS, COLS>::new();
         for i in 0..self.data.len() {
             result.data[i] = self.data[i] * scalar;
@@ -487,14 +487,14 @@ pub mod tests {
     }
     #[test]
     fn inverse() {
-        let a_values: [[f64; 4]; 4] = [
+        let a_values: [[f32; 4]; 4] = [
             [8.0, -5.0, 9.0, 2.0],
             [7.0, 5.0, 6.0, 1.0],
             [-6.0, 0.0, 9.0, 6.0],
             [-3.0, 0.0, -9.0, -4.0],
         ];
         let m = Matrix::from_array(a_values);
-        let a_inverse_values: [[f64; 4]; 4] = [
+        let a_inverse_values: [[f32; 4]; 4] = [
             [-0.15385, -0.15385, -0.28205, -0.53846],
             [-0.07692, 0.12308, 0.02564, 0.03077],
             [0.35897, 0.35897, 0.43590, 0.92308],
@@ -503,14 +503,14 @@ pub mod tests {
         let m_inverse = Matrix::from_array(a_inverse_values);
         assert!(m.inverse() == m_inverse);
 
-        let a_values: [[f64; 4]; 4] = [
+        let a_values: [[f32; 4]; 4] = [
             [3.0, -9.0, 7.0, 3.0],
             [3.0, -8.0, 2.0, -9.0],
             [-4.0, 4.0, 4.0, 1.0],
             [-6.0, 5.0, -1.0, 1.0],
         ];
         let a = Matrix::from_array(a_values);
-        let b_values: [[f64; 4]; 4] = [
+        let b_values: [[f32; 4]; 4] = [
             [8.0, 2.0, 2.0, 2.0],
             [3.0, -1.0, 7.0, 0.0],
             [7.0, 0.0, 5.0, 4.0],

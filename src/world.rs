@@ -143,7 +143,7 @@ impl World {
 
 #[cfg(test)]
 pub mod tests {
-    use std::f64::consts::SQRT_2;
+    use std::f32::consts::SQRT_2;
     use std::sync::Arc;
 
     use crate::Sphere;

@@ -1,4 +1,4 @@
-use std::f64::INFINITY;
+use std::f32::INFINITY;
 
 use super::{Shape, next_shape_id};
 use crate::bounds::Bounds;
@@ -41,7 +41,7 @@ impl Cube {
         }
     }
 
-    pub fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
+    pub fn check_axis(origin: f32, direction: f32) -> (f32, f32) {
         let tmin_numerator = -1.0 - origin;
         let tmax_numerator = 1.0 - origin;
 
@@ -132,7 +132,7 @@ impl Shape for Cube {
 
 #[cfg(test)]
 pub mod tests {
-    //use std::f64::consts::PI;
+    //use std::f32::consts::PI;
 
     use std::sync::Arc;
 
@@ -148,8 +148,8 @@ pub mod tests {
         struct TestCase {
             origin: Vec4,
             direction: Vec4,
-            t1: f64,
-            t2: f64,
+            t1: f32,
+            t2: f32,
         }
 
         let cases = vec![

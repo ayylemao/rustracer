@@ -10,11 +10,11 @@ use rayon::prelude::*;
 pub struct Camera {
     pub hsize: usize,
     pub vsize: usize,
-    pub fov: f64,
+    pub fov: f32,
     pub transform: Matrix<4, 4>,
-    pub pixel_size: f64,
-    pub half_width: f64,
-    pub half_height: f64,
+    pub pixel_size: f32,
+    pub half_width: f32,
+    pub half_height: f32,
     pub reflection_max: usize,
     pub max_threads: usize,
     pub inverse: SqMatrix<4>,
@@ -24,19 +24,19 @@ impl Camera {
     pub fn new(
         hsize: usize,
         vsize: usize,
-        fov: f64,
+        fov: f32,
         reflection_max: usize,
         max_threads: usize,
     ) -> Self {
         let half_view = (fov / 2.0).tan();
-        let aspect = hsize as f64 / vsize as f64;
+        let aspect = hsize as f32 / vsize as f32;
         let (half_width, half_height) = if aspect >= 1.0 {
             (half_view, half_view / aspect)
         } else {
             (half_view * aspect, half_view)
         };
 
-        let pixel_size = (half_width * 2.0) / hsize as f64;
+        let pixel_size = (half_width * 2.0) / hsize as f32;
 
         Camera {
             hsize,
@@ -74,7 +74,7 @@ impl Camera {
     }
     pub fn rays_for_pixels(&self, px: usize, py: usize) -> [Ray; SAMPLES_PER_PIXEL] {
         let mut rng = rand::rng();
-        let n_sqrt = (SAMPLES_PER_PIXEL as f64).sqrt().round() as usize;
+        let n_sqrt = (SAMPLES_PER_PIXEL as f32).sqrt().round() as usize;
         debug_assert_eq!(
             n_sqrt * n_sqrt,
             SAMPLES_PER_PIXEL,
@@ -85,11 +85,11 @@ impl Camera {
             let xi = i % n_sqrt;
             let yi = i / n_sqrt;
 
-            let dx: f64 = (xi as f64 + rng.random::<f64>()) / n_sqrt as f64;
-            let dy: f64 = (yi as f64 + rng.random::<f64>()) / n_sqrt as f64;
+            let dx: f32 = (xi as f32 + rng.random::<f32>()) / n_sqrt as f32;
+            let dy: f32 = (yi as f32 + rng.random::<f32>()) / n_sqrt as f32;
 
-            let xoffset = (px as f64 + dx) * self.pixel_size;
-            let yoffset = (py as f64 + dy) * self.pixel_size;
+            let xoffset = (px as f32 + dx) * self.pixel_size;
+            let yoffset = (py as f32 + dy) * self.pixel_size;
 
             let world_x = self.half_width - xoffset;
             let world_y = self.half_height - yoffset;
@@ -103,8 +103,8 @@ impl Camera {
     }
 
     pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
-        let px = px as f64;
-        let py = py as f64;
+        let px = px as f32;
+        let py = py as f32;
         let xoffset = (px + 0.5) * self.pixel_size;
         let yoffset = (py + 0.5) * self.pixel_size;
 
@@ -150,7 +150,7 @@ impl Camera {
                         for ray in rays {
                             color_avg += world.color_at(&ray, self.reflection_max);
                         }
-                        color_avg / SAMPLES_PER_PIXEL as f64
+                        color_avg / SAMPLES_PER_PIXEL as f32
                     };
                     bar.inc(1);
                     ((x, y), color)
@@ -169,7 +169,7 @@ impl Camera {
 
 #[cfg(test)]
 pub mod tests {
-    use std::f64::consts::{PI, SQRT_2};
+    use std::f32::consts::{PI, SQRT_2};
 
     use crate::{color::Color, matrix::Matrix, vec4::Vec4, world::World};
 

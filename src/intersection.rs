@@ -12,8 +12,8 @@ pub struct Computations<'a> {
     pub inside: bool,
     pub over_point: Vec4,
     pub reflectv: Vec4,
-    pub n1: f64,
-    pub n2: f64,
+    pub n1: f32,
+    pub n2: f32,
     pub under_point: Vec4,
 }
 impl<'a> Computations<'a> {
@@ -23,8 +23,8 @@ impl<'a> Computations<'a> {
         eyev: Vec4,
         normalv: Vec4,
         raydir: Vec4,
-        n1: f64,
-        n2: f64,
+        n1: f32,
+        n2: f32,
     ) -> Self {
         let (inside, normalv) = if normalv.dot(&eyev) < 0.0 {
             (true, -normalv)
@@ -51,7 +51,7 @@ impl<'a> Computations<'a> {
         self.object
     }
 
-    pub fn schlick(&self) -> f64 {
+    pub fn schlick(&self) -> f32 {
         let mut cos = self.eyev.dot(&self.normalv);
         if self.n1 > self.n2 {
             let n = self.n1 / self.n2;
@@ -70,14 +70,14 @@ impl<'a> Computations<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Intersection<'a> {
-    pub t: f64,
+    pub t: f32,
     pub object: &'a dyn Shape,
-    pub u: Option<f64>,
-    pub v: Option<f64>,
+    pub u: Option<f32>,
+    pub v: Option<f32>,
 }
 
 impl Intersection<'_> {
-    pub fn new(t: f64, object: &dyn Shape, u: Option<f64>, v: Option<f64>) -> Intersection {
+    pub fn new(t: f32, object: &dyn Shape, u: Option<f32>, v: Option<f32>) -> Intersection {
         Intersection { t, object, u, v }
     }
 
@@ -150,7 +150,7 @@ impl Ord for Intersection<'_> {
 
 #[cfg(test)]
 pub mod tests {
-    use std::f64::consts::SQRT_2;
+    use std::f32::consts::SQRT_2;
 
     use crate::{Sphere, shapes::plane::Plane};
 

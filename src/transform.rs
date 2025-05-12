@@ -1,7 +1,7 @@
 use crate::matrix::SqMatrix;
 
 impl SqMatrix<4> {
-    pub fn translation(x: f64, y: f64, z: f64) -> SqMatrix<4> {
+    pub fn translation(x: f32, y: f32, z: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
         mat[(0, 3)] = x;
         mat[(1, 3)] = y;
@@ -9,7 +9,7 @@ impl SqMatrix<4> {
         mat[(3, 3)] = 1.0;
         mat
     }
-    pub fn scaling(x: f64, y: f64, z: f64) -> SqMatrix<4> {
+    pub fn scaling(x: f32, y: f32, z: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::new();
         mat[(0, 0)] = x;
         mat[(1, 1)] = y;
@@ -17,31 +17,31 @@ impl SqMatrix<4> {
         mat[(3, 3)] = 1.0;
         mat
     }
-    pub fn rotation_x(r: f64) -> SqMatrix<4> {
+    pub fn rotation_x(r: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
-        mat[(1, 1)] = f64::cos(r);
-        mat[(1, 2)] = -f64::sin(r);
-        mat[(2, 1)] = f64::sin(r);
-        mat[(2, 2)] = f64::cos(r);
+        mat[(1, 1)] = f32::cos(r);
+        mat[(1, 2)] = -f32::sin(r);
+        mat[(2, 1)] = f32::sin(r);
+        mat[(2, 2)] = f32::cos(r);
         mat
     }
-    pub fn rotation_y(r: f64) -> SqMatrix<4> {
+    pub fn rotation_y(r: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
-        mat[(0, 0)] = f64::cos(r);
-        mat[(0, 2)] = f64::sin(r);
-        mat[(2, 0)] = -f64::sin(r);
-        mat[(2, 2)] = f64::cos(r);
+        mat[(0, 0)] = f32::cos(r);
+        mat[(0, 2)] = f32::sin(r);
+        mat[(2, 0)] = -f32::sin(r);
+        mat[(2, 2)] = f32::cos(r);
         mat
     }
-    pub fn rotation_z(r: f64) -> SqMatrix<4> {
+    pub fn rotation_z(r: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
-        mat[(0, 0)] = f64::cos(r);
-        mat[(0, 1)] = -f64::sin(r);
-        mat[(1, 0)] = f64::sin(r);
-        mat[(1, 1)] = f64::cos(r);
+        mat[(0, 0)] = f32::cos(r);
+        mat[(0, 1)] = -f32::sin(r);
+        mat[(1, 0)] = f32::sin(r);
+        mat[(1, 1)] = f32::cos(r);
         mat
     }
-    pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> SqMatrix<4> {
+    pub fn shearing(xy: f32, xz: f32, yx: f32, yz: f32, zx: f32, zy: f32) -> SqMatrix<4> {
         let mut mat = SqMatrix::<4>::eye();
         mat[(0, 1)] = xy;
         mat[(0, 2)] = xz;
@@ -57,7 +57,7 @@ impl SqMatrix<4> {
 pub mod tests {
     use crate::matrix::Matrix;
     use crate::vec4::Vec4;
-    use std::f64::consts::PI;
+    use std::f32::consts::PI;
 
     #[test]
     fn translate() {
@@ -90,7 +90,7 @@ pub mod tests {
     fn test_individual_and_chained_transformations_rotation_x() {
         let p = Vec4::point(1.0, 0.0, 1.0);
 
-        let a = Matrix::rotation_x(std::f64::consts::FRAC_PI_2); // π / 2
+        let a = Matrix::rotation_x(std::f32::consts::FRAC_PI_2); // π / 2
         let b = Matrix::scaling(5.0, 5.0, 5.0);
         let c = Matrix::translation(10.0, 5.0, 7.0);
 
@@ -113,7 +113,7 @@ pub mod tests {
         let p = Vec4::point(0.0, 0.0, 1.0);
 
         // Transformation matrices
-        let a = Matrix::rotation_y(std::f64::consts::FRAC_PI_2); // π / 2
+        let a = Matrix::rotation_y(std::f32::consts::FRAC_PI_2); // π / 2
         let b = Matrix::scaling(5.0, 5.0, 5.0);
         let c = Matrix::translation(10.0, 5.0, 7.0);
 
@@ -138,7 +138,7 @@ pub mod tests {
         let p = Vec4::point(0.0, 1.0, 0.0);
 
         // Transformation matrices
-        let a = Matrix::rotation_z(std::f64::consts::FRAC_PI_2); // π / 2
+        let a = Matrix::rotation_z(std::f32::consts::FRAC_PI_2); // π / 2
         let b = Matrix::scaling(5.0, 5.0, 5.0);
         let c = Matrix::translation(10.0, 5.0, 7.0);
 

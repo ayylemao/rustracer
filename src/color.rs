@@ -4,13 +4,13 @@ use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-    pub r: f64,
-    pub g: f64,
-    pub b: f64,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
 }
 
 impl Color {
-    pub fn new(r: f64, g: f64, b: f64) -> Color {
+    pub fn new(r: f32, g: f32, b: f32) -> Color {
         Self { r, g, b }
     }
     pub fn default() -> Color {
@@ -113,9 +113,9 @@ impl Color {
     }
     pub fn to_rgb_u8(self) -> (u8, u8, u8) {
         (
-            (self.r.clamp(0.0, 1.0) * 255.0f64).round() as u8,
-            (self.g.clamp(0.0, 1.0) * 255.0f64).round() as u8,
-            (self.b.clamp(0.0, 1.0) * 255.0f64).round() as u8,
+            (self.r.clamp(0.0, 1.0) * 255.0f32).round() as u8,
+            (self.g.clamp(0.0, 1.0) * 255.0f32).round() as u8,
+            (self.b.clamp(0.0, 1.0) * 255.0f32).round() as u8,
         )
     }
 }
@@ -156,9 +156,9 @@ impl SubAssign for Color {
     }
 }
 
-impl Div<f64> for Color {
+impl Div<f32> for Color {
     type Output = Color;
-    fn div(self, rhs: f64) -> Self::Output {
+    fn div(self, rhs: f32) -> Self::Output {
         Color::new(self.r / rhs, self.g / rhs, self.b / rhs)
     }
 }
@@ -184,7 +184,7 @@ where
 {
     type Output = Color;
     fn mul(self, rhs: I) -> Self::Output {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         let result = Color {
             r: self.r * scalar,
             g: self.g * scalar,
@@ -198,7 +198,7 @@ where
     I: ToPrimitive + Copy,
 {
     fn mul_assign(&mut self, rhs: I) {
-        let scalar = rhs.to_f64().expect("Failed to convert to f64");
+        let scalar = rhs.to_f32().expect("Failed to convert to f32");
         self.r *= scalar;
         self.g *= scalar;
         self.b *= scalar;

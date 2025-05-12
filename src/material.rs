@@ -5,14 +5,14 @@ use crate::{color::Color, light::PointLight, patterns::Pattern, shapes::Shape, v
 #[derive(Debug, Clone)]
 pub struct Material {
     pub color: Color,
-    pub ambient: f64,
-    pub diffuse: f64,
-    pub specular: f64,
-    pub shininess: f64,
+    pub ambient: f32,
+    pub diffuse: f32,
+    pub specular: f32,
+    pub shininess: f32,
     pub pattern: Option<Arc<dyn Pattern + Send + Sync>>,
-    pub reflective: f64,
-    pub transparency: f64,
-    pub refractive_index: f64,
+    pub reflective: f32,
+    pub transparency: f32,
+    pub refractive_index: f32,
 }
 
 impl Material {
@@ -31,11 +31,11 @@ impl Material {
     }
     pub fn new(
         color: Color,
-        ambient: f64,
-        diffuse: f64,
-        specular: f64,
-        shininess: f64,
-        reflective: f64,
+        ambient: f32,
+        diffuse: f32,
+        specular: f32,
+        shininess: f32,
+        reflective: f32,
     ) -> Self {
         Self {
             color,
@@ -109,7 +109,7 @@ pub mod tests {
     use crate::{Sphere, patterns::stripe_pattern::StripePattern};
 
     use super::*;
-    use std::f64::consts::SQRT_2;
+    use std::f32::consts::SQRT_2;
 
     #[test]
     pub fn lighting_with_eye_offset_45_degrees() {
@@ -141,7 +141,7 @@ pub mod tests {
     }
     #[test]
     pub fn lighting_with_eye_in_reflection_path() {
-        use std::f64::consts::SQRT_2;
+        use std::f32::consts::SQRT_2;
 
         let m = Material::default();
         let position = Vec4::point(0.0, 0.0, 0.0);

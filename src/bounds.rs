@@ -1,4 +1,4 @@
-use std::f64::INFINITY;
+use std::f32::INFINITY;
 
 use crate::{math::EPSILON, matrix::Matrix, ray::Ray, vec4::Vec4};
 
@@ -46,7 +46,7 @@ impl Bounds {
         true
     }
 
-    pub fn check_axis(min_axis: f64, max_axis: f64, origin: f64, direction: f64) -> (f64, f64) {
+    pub fn check_axis(min_axis: f32, max_axis: f32, origin: f32, direction: f32) -> (f32, f32) {
         let tmin_numerator = min_axis - origin;
         let tmax_numerator = max_axis - origin;
 
