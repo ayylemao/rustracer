@@ -1,10 +1,14 @@
-use std::{num::NonZeroU64, str::FromStr};
+use std::collections::HashMap;
+
 use gpu_types::{GpuIntersection, GpuRay, GpuShape};
 use wgpu::util::DeviceExt;
 use wgpu::{BindGroupLayout, Buffer, ComputePipeline, Device, Queue};
-use wgpu::{BindGroup, PipelineCache, PipelineCompilationOptions};
+use wgpu::BindGroup;
 
+use crate::shapes::Shape;
 pub mod gpu_types;
+
+const MAX_INTERSECTIONS_PER_RAY: u32 = 8;
 
 pub struct GPUAccel {
     device: Device,
@@ -15,6 +19,7 @@ pub struct GPUAccel {
     ray_buffer: Option<Buffer>,
     shape_buffer: Option<Buffer>,
     intersection_buffer: Option<Buffer>,
+    //shape_mapping: HashMap<u32, &dyn Shape>
 }
 
 impl GPUAccel {
@@ -185,5 +190,15 @@ impl GPUAccel {
         let data = slice.get_mapped_range();
         let result: &[GpuIntersection] = bytemuck::cast_slice(&data);
         result.to_vec()
+    }
+
+    pub fn get_hits_for_ray(results: &Vec<GpuIntersection>, ray_idx: usize) -> Vec<GpuIntersection> {
+        let start = ray_idx * MAX_INTERSECTIONS_PER_RAY as usize;
+        let end = start + MAX_INTERSECTIONS_PER_RAY as usize;
+        results[start..end]
+            .iter()
+            .filter(|hit| hit.shape_id != 0)
+            .cloned()
+            .collect()
     }
 }

@@ -17,6 +17,8 @@ struct GpuShape {
 struct GpuIntersection {
     shape_id: u32,
     t: f32,
+    u: f32,
+    v: f32
 };
 
 fn mat4x4_from_inverse(shape: GpuShape) -> mat4x4<f32> {
@@ -76,12 +78,12 @@ fn intersect(@builtin(global_invocation_id) global_id: vec3<u32>) {
             let t2: f32 = (-b + sqrt(discriminant)) / (2.0 * a);
 
             if (t1 > 0.0 && hits_written < MAX_INTERSECTIONS_PER_RAY) {
-                intersections[base + hits_written] = GpuIntersection(shape.id, t1);
+                intersections[base + hits_written] = GpuIntersection(shape.id, t1, -1.0, -1.0);
                 hits_written = hits_written + 1u;
             }
 
             if (t2 > 0.0 && hits_written < MAX_INTERSECTIONS_PER_RAY) {
-                intersections[base + hits_written] = GpuIntersection(shape.id, t2);
+                intersections[base + hits_written] = GpuIntersection(shape.id, t2, -1.0, -1.0);
                 hits_written = hits_written + 1u;
             }
         }

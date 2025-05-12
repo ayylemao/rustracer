@@ -1,13 +1,12 @@
 use bytemuck::{Pod, Zeroable};
 
-use crate::{ray::Ray, shapes::Shape, Sphere};
-
+use crate::{Sphere, ray::Ray, shapes::Shape};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct GpuRay {
     pub origin: [f32; 4],
-    pub direction: [f32; 4]
+    pub direction: [f32; 4],
 }
 
 impl GpuRay {
@@ -22,7 +21,7 @@ impl GpuRay {
         direction[1] = ray.direction.y;
         direction[2] = ray.direction.z;
         direction[3] = ray.direction.w;
-        GpuRay { origin, direction}
+        GpuRay { origin, direction }
     }
 }
 
@@ -31,7 +30,7 @@ impl GpuRay {
 pub struct GpuShape {
     pub id: u32,
     pub kind: u32,
-    pub _padding: [u32; 2], 
+    pub _padding: [u32; 2],
     inverse: [f32; 16],
     add_data: [f32; 24],
 }
@@ -39,8 +38,10 @@ pub struct GpuShape {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct GpuIntersection {
-    shape_id: u32,
-    t: f32,
+    pub shape_id: u32,
+    pub t: f32,
+    pub u: f32,
+    pub v: f32,
 }
 
 impl GpuShape {
@@ -56,40 +57,33 @@ impl GpuShape {
                     inverse_data[i * 4 + j] = inverse[(i, j)];
                 }
             }
-            
+
             return GpuShape {
                 id: sphere.id as u32,
                 kind: 1,
                 _padding: [0; 2],
                 inverse: inverse_data,
                 add_data: add_data,
-            }
+            };
         } else {
             panic!("Shape not yet implemented!")
         };
     }
 }
 
-
 #[cfg(test)]
 pub mod tests {
     use std::{f32::consts::PI, sync::Arc};
 
-    use rayon::result;
-    use wgpu::util::DeviceExt;
-    use wgpu::PipelineCompilationOptions;
-
-    use crate::ray::Ray;
-    use crate::{matrix::Matrix, world::World, Sphere};
     use crate::gpu::GPUAccel;
+    use crate::ray::Ray;
+    use crate::{Sphere, matrix::Matrix, world::World};
 
-    use super::{GpuIntersection, GpuRay, GpuShape};
-
-
+    use super::{GpuRay, GpuShape};
 
     #[test]
     fn init_sphere() {
-        let s1 = Sphere::with_transformation(Matrix::rotation_x(PI/2.0));
+        let s1 = Sphere::with_transformation(Matrix::rotation_x(PI / 2.0));
         let mut world = World::default();
 
         world.add_shape(Arc::new(s1));
@@ -106,8 +100,9 @@ pub mod tests {
 
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let trans = Matrix::scaling(2.0, 2.0, 2.0);
-        let s1 = Sphere::with_transformation(trans);
-        
+        let mut s1 = Sphere::with_transformation(trans);
+        s1.id = 1;
+
         let gpuray = GpuRay::from_ray(&ray);
         let gpusphere = GpuShape::from_shape(Arc::new(s1).as_ref());
 
@@ -119,9 +114,10 @@ pub mod tests {
         gpu_accel.dispatch();
 
         let result = gpu_accel.download_intersections();
+        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
 
-        assert_eq!(result.len(), 8);
-        assert_eq!(result[0].t, 3.0);
-        assert_eq!(result[1].t, 7.0);
+        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0].t, 3.0);
+        assert_eq!(intersections[1].t, 7.0);
     }
 }
