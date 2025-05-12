@@ -14,7 +14,7 @@ pub struct Group {
     pub children: Vec<Arc<dyn Shape + Send + Sync>>,
     pub transfom: SqMatrix<4>,
     pub inverse: SqMatrix<4>,
-    pub bounds: Bounds
+    pub bounds: Bounds,
 }
 
 impl Group {
@@ -24,9 +24,11 @@ impl Group {
             children: Vec::new(),
             transfom: Matrix::eye(),
             inverse: Matrix::eye(),
-            bounds: Bounds::new(Vec4::point(-INFINITY, -INFINITY,-INFINITY), Vec4::point(INFINITY, INFINITY, INFINITY))
+            bounds: Bounds::new(
+                Vec4::point(-INFINITY, -INFINITY, -INFINITY),
+                Vec4::point(INFINITY, INFINITY, INFINITY),
+            ),
         }
-        
     }
     pub fn add_child(&mut self, mut shape: Arc<dyn Shape + Send + Sync>) {
         let combined = &self.transfom * shape.transform();
@@ -131,7 +133,7 @@ impl Shape for Group {
         self
     }
 
-    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
 
@@ -142,18 +144,18 @@ impl Shape for Group {
         let mut x_max = f64::NEG_INFINITY;
         let mut y_max = f64::NEG_INFINITY;
         let mut z_max = f64::NEG_INFINITY;
-    
+
         for child in &self.children {
             let b = if child.as_any().is::<Group>() {
                 child.bounds()
             } else {
                 child.bounds().transform(child.transform())
             };
-    
+
             if !b.is_finite() {
                 continue;
             }
-    
+
             x_min = x_min.min(b.min.x);
             y_min = y_min.min(b.min.y);
             z_min = z_min.min(b.min.z);
@@ -161,7 +163,7 @@ impl Shape for Group {
             y_max = y_max.max(b.max.y);
             z_max = z_max.max(b.max.z);
         }
-    
+
         Bounds::new(
             Vec4::point(x_min, y_min, z_min),
             Vec4::point(x_max, y_max, z_max),

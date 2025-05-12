@@ -1,11 +1,11 @@
+use crate::SAMPLES_PER_PIXEL;
 use crate::matrix::SqMatrix;
 use crate::{canvas::Canvas, color::Color, matrix::Matrix, ray::Ray, vec4::Vec4, world::World};
+use array_init::array_init;
 use indicatif::{ProgressBar, ProgressStyle};
+use rand::Rng;
 use rayon::ThreadPoolBuilder;
 use rayon::prelude::*;
-use rand::Rng;
-use array_init::array_init;
-use crate::SAMPLES_PER_PIXEL;
 
 pub struct Camera {
     pub hsize: usize,
@@ -75,7 +75,11 @@ impl Camera {
     pub fn rays_for_pixels(&self, px: usize, py: usize) -> [Ray; SAMPLES_PER_PIXEL] {
         let mut rng = rand::rng();
         let n_sqrt = (SAMPLES_PER_PIXEL as f64).sqrt().round() as usize;
-        debug_assert_eq!(n_sqrt * n_sqrt, SAMPLES_PER_PIXEL, "SAMPLES_PER_PIXEL must be a perfect square");
+        debug_assert_eq!(
+            n_sqrt * n_sqrt,
+            SAMPLES_PER_PIXEL,
+            "SAMPLES_PER_PIXEL must be a perfect square"
+        );
 
         array_init(|i| {
             let xi = i % n_sqrt;

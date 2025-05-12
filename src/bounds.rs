@@ -30,9 +30,12 @@ impl Bounds {
     }
 
     pub fn intersection<'a>(&'a self, ray: &Ray) -> bool {
-        let (xtmin, xtmax) = Bounds::check_axis(self.min.x, self.max.x, ray.origin.x, ray.direction.x);
-        let (ytmin, ytmax) = Bounds::check_axis(self.min.y, self.max.y, ray.origin.y, ray.direction.y);
-        let (ztmin, ztmax) = Bounds::check_axis(self.min.z, self.max.z, ray.origin.z, ray.direction.z);
+        let (xtmin, xtmax) =
+            Bounds::check_axis(self.min.x, self.max.x, ray.origin.x, ray.direction.x);
+        let (ytmin, ytmax) =
+            Bounds::check_axis(self.min.y, self.max.y, ray.origin.y, ray.direction.y);
+        let (ztmin, ztmax) =
+            Bounds::check_axis(self.min.z, self.max.z, ray.origin.z, ray.direction.z);
 
         let tmin = xtmin.max(ytmin).max(ztmin);
         let tmax = xtmax.min(ytmax).min(ztmax);
@@ -66,7 +69,12 @@ pub mod tests {
     use std::sync::Arc;
 
     use crate::{
-        bounds::Bounds, matrix::Matrix, obj_parser::Parser, shapes::{group::Group, Shape}, vec4::Vec4, Sphere
+        Sphere,
+        bounds::Bounds,
+        matrix::Matrix,
+        obj_parser::Parser,
+        shapes::{Shape, group::Group},
+        vec4::Vec4,
     };
 
     #[test]
@@ -100,7 +108,7 @@ pub mod tests {
                 Vec4::point(17.17, 10.0, 15.75)
             )
         );
-        
+
         g.set_transformation(Matrix::scaling(5.0, 1.0, 1.0));
 
         assert_eq!(

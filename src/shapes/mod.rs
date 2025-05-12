@@ -42,6 +42,6 @@ pub trait Shape: Debug + Sync + Send + Any {
     fn id(&self) -> usize;
     fn inverse(&self) -> &Matrix<4, 4>;
     fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) ->  &mut dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
     fn bounds(&self) -> Bounds;
 }

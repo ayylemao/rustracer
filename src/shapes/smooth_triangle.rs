@@ -128,7 +128,7 @@ impl Shape for SmoothTriangle {
         self.bounds
     }
 
-    fn as_any_mut(&mut self) ->  &mut dyn std::any::Any {
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
 }

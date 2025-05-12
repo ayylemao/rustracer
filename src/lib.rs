@@ -12,6 +12,7 @@ pub mod ray;
 pub mod shapes;
 pub use shapes::sphere::Sphere;
 pub mod bounds;
+pub mod gpu;
 pub mod obj_parser;
 pub mod patterns;
 pub mod transform;
