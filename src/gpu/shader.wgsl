@@ -50,7 +50,7 @@ fn intersect(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let ray = rays[index];    
 
-    let base = index * 2u;
+    let base = index * MAX_INTERSECTIONS_PER_RAY;
 
     var hits_written = 0u;
 
@@ -75,12 +75,12 @@ fn intersect(@builtin(global_invocation_id) global_id: vec3<u32>) {
             let t1: f32 = (-b - sqrt(discriminant)) / (2.0 * a);
             let t2: f32 = (-b + sqrt(discriminant)) / (2.0 * a);
 
-            if (t1 > 0.0 && hits_written < 2u) {
+            if (t1 > 0.0 && hits_written < MAX_INTERSECTIONS_PER_RAY) {
                 intersections[base + hits_written] = GpuIntersection(shape.id, t1);
                 hits_written = hits_written + 1u;
             }
 
-            if (t2 > 0.0 && hits_written < 2u) {
+            if (t2 > 0.0 && hits_written < MAX_INTERSECTIONS_PER_RAY) {
                 intersections[base + hits_written] = GpuIntersection(shape.id, t2);
                 hits_written = hits_written + 1u;
             }

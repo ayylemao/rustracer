@@ -75,6 +75,7 @@ impl GpuShape {
 pub mod tests {
     use std::{f32::consts::PI, sync::Arc};
 
+    use rayon::result;
     use wgpu::util::DeviceExt;
     use wgpu::PipelineCompilationOptions;
 
@@ -101,49 +102,7 @@ pub mod tests {
 
     #[test]
     pub fn sphere_intersect() {
-        let (device, queue) = GPUAccel::init();
-
-
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Intersect Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
-        });
-
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("intersection_layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-            ],
-        });
+        let mut gpu_accel = GPUAccel::new("src/gpu/shader.wgsl");
 
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let trans = Matrix::scaling(2.0, 2.0, 2.0);
@@ -153,125 +112,16 @@ pub mod tests {
         let gpusphere = GpuShape::from_shape(Arc::new(s1).as_ref());
 
         let rays = vec![gpuray];
-        let shapes = vec![gpusphere];
+        let shapes: Vec<GpuShape> = vec![gpusphere];
 
-        let input_ray_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Input Rays"),
-                contents: bytemuck::cast_slice(&rays),
-                usage: wgpu::BufferUsages::STORAGE
-            }
-        );
+        gpu_accel.upload_rays_and_shapes(&rays, &shapes);
 
-        let input_shape_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Input Shapes"),
-                contents: bytemuck::cast_slice(&shapes),
-                usage: wgpu::BufferUsages::STORAGE
-            }
-        );
+        gpu_accel.dispatch();
 
-        let intersection_buffer = device.create_buffer(
-            &wgpu::BufferDescriptor {
-                label: Some("Intersection Buffer"),
-                size: (rays.len() * 2 * std::mem::size_of::<GpuIntersection>()) as u64,
-                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-                mapped_at_creation: false
-            }
-        );
-        
-        let bind_group = device.create_bind_group(
-            &wgpu::BindGroupDescriptor {
-                label: Some("Bind group"),
-                layout: &bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: input_ray_buffer.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: input_shape_buffer.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: intersection_buffer.as_entire_binding() 
-                    }
-                ]
-            }
-        );
+        let result = gpu_accel.download_intersections();
 
-        let pipeline_layout = device.create_pipeline_layout(
-            &wgpu::PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[]
-            }
-        );
-
-        let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: None,
-            layout: Some(&pipeline_layout),
-            module: &shader,
-            entry_point: Some("intersect"),
-            compilation_options: PipelineCompilationOptions::default(),
-            cache: None,
-        });
-
-        let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        
-        let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-            label: None,
-            timestamp_writes: None,
-        });
-
-        compute_pass.set_pipeline(&compute_pipeline);
-        compute_pass.set_bind_group(0, &bind_group, &[]);
-
-        let num_elements = rays.len();
-        let workgroup_size = 64;
-        let workgroup_count = (num_elements + workgroup_size - 1) / workgroup_size;
-
-        compute_pass.dispatch_workgroups(workgroup_count as u32, 1, 1);
-
-        drop(compute_pass);
-
-        let download_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Download Buffer"),
-            size: intersection_buffer.size(),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            mapped_at_creation: false,
-        });
-
-        encoder.copy_buffer_to_buffer(
-            &intersection_buffer,
-            0,
-            &download_buffer,
-            0,
-            intersection_buffer.size(),
-        );
-
-        let command_buffer = encoder.finish();
-        queue.submit([command_buffer]);
-        
-        let buffer_slice = download_buffer.slice(..);
-
-        buffer_slice.map_async(wgpu::MapMode::Read, |_| {
-            // In this case we know exactly when the mapping will be finished,
-            // so we don't need to do anything in the callback.
-        });
-
-        device.poll(wgpu::PollType::Wait).unwrap();
-
-        let data = buffer_slice.get_mapped_range();
-
-        let result: &[GpuIntersection] = bytemuck::cast_slice(&data);
-
-        assert_eq!(result.len(), 2);
+        assert_eq!(result.len(), 8);
         assert_eq!(result[0].t, 3.0);
         assert_eq!(result[1].t, 7.0);
-
-
     }
 }
