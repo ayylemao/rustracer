@@ -1,4 +1,4 @@
-pub const SAMPLES_PER_PIXEL: usize = 32;
+pub const SAMPLES_PER_PIXEL: usize = 1;
 
 pub mod camera;
 pub mod canvas;
