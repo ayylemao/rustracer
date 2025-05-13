@@ -6,6 +6,7 @@ use wgpu::BindGroup;
 use wgpu::util::DeviceExt;
 use wgpu::{BindGroupLayout, Buffer, ComputePipeline, Device, Queue};
 
+use crate::intersection::Intersection;
 use crate::shapes::Shape;
 pub mod gpu_types;
 
@@ -218,15 +219,17 @@ impl<'a> GPUAccel<'a> {
     }
 
     pub fn get_hits_for_ray(
+        &self,
         results: &Vec<GpuIntersection>,
         ray_idx: usize,
-    ) -> Vec<GpuIntersection> {
+    ) -> Vec<Intersection> {
         let start = ray_idx * MAX_INTERSECTIONS_PER_RAY as usize;
         let end = start + MAX_INTERSECTIONS_PER_RAY as usize;
         results[start..end]
             .iter()
             .filter(|hit| hit.shape_id != 0)
             .cloned()
+            .map(|e| Intersection::from_gpu(e, &self.shape_mapping))
             .collect()
     }
 

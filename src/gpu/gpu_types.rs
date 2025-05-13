@@ -152,7 +152,7 @@ pub mod tests {
         gpu_accel.dispatch();
 
         let result = gpu_accel.download_intersections();
-        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
+        let intersections = gpu_accel.get_hits_for_ray(&result, 0);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, 3.0);
@@ -180,7 +180,7 @@ pub mod tests {
         gpu_accel.dispatch();
 
         let result = gpu_accel.download_intersections();
-        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
+        let intersections = gpu_accel.get_hits_for_ray(&result, 0);
         println!("{:?}", intersections);
         assert_eq!(intersections.len(), 1);
         assert_eq!(intersections[0].t, 2.0);
@@ -191,7 +191,7 @@ pub mod tests {
 
         gpu_accel.upload_rays_and_shapes(&rays);
         let result = gpu_accel.download_intersections();
-        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
+        let intersections = gpu_accel.get_hits_for_ray(&result, 0);
         assert_eq!(intersections.len(), 0);
     }
 }

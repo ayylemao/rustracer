@@ -85,7 +85,7 @@ impl Intersection<'_> {
 
     pub fn from_gpu<'a>(
         gpu_int: GpuIntersection,
-        shape_map: HashMap<u32, &'a dyn Shape>,
+        shape_map: &HashMap<u32, &'a dyn Shape>,
     ) -> Intersection<'a> {
         let object = *shape_map.get(&gpu_int.shape_id).unwrap();
         let (u, v) = if gpu_int.u < 0.0 || gpu_int.v < 0.0 {
