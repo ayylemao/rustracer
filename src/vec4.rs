@@ -173,6 +173,15 @@ impl Vec4 {
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w: w }
     }
+    pub fn zero() -> Self {
+        let val = 0.0;
+        Self {
+            x: val,
+            y: val,
+            z: val,
+            w: val,
+        }
+    }
     pub fn from_array(array: [f32; 4]) -> Self {
         Self {
             x: array[0],

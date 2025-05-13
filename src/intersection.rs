@@ -1,8 +1,10 @@
+use crate::gpu::gpu_types::GpuIntersection;
 use crate::math::{ApproxEq, EPSILON};
 use crate::ray::Ray;
 use crate::shapes::Shape;
 use crate::vec4::Vec4;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 pub struct Computations<'a> {
     pub object: &'a dyn Shape,
@@ -79,6 +81,19 @@ pub struct Intersection<'a> {
 impl Intersection<'_> {
     pub fn new(t: f32, object: &dyn Shape, u: Option<f32>, v: Option<f32>) -> Intersection {
         Intersection { t, object, u, v }
+    }
+
+    pub fn from_gpu<'a>(
+        gpu_int: GpuIntersection,
+        shape_map: HashMap<u32, &'a dyn Shape>,
+    ) -> Intersection<'a> {
+        let object = *shape_map.get(&gpu_int.shape_id).unwrap();
+        let (u, v) = if gpu_int.u < 0.0 || gpu_int.v < 0.0 {
+            (None, None)
+        } else {
+            (Some(gpu_int.u), Some(gpu_int.v))
+        };
+        Intersection::new(gpu_int.t, object, u, v)
     }
 
     pub fn hit<'a>(int_list: &'a [Intersection<'a>]) -> Option<&'a Intersection<'a>> {

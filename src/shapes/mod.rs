@@ -15,7 +15,7 @@ pub mod smooth_triangle;
 pub mod sphere;
 pub mod triangle;
 
-static SHAPE_ID: AtomicUsize = AtomicUsize::new(0);
+static SHAPE_ID: AtomicUsize = AtomicUsize::new(1);
 
 pub fn next_shape_id() -> usize {
     SHAPE_ID.fetch_add(1, Ordering::Relaxed)

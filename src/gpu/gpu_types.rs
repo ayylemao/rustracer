@@ -1,6 +1,10 @@
 use bytemuck::{Pod, Zeroable};
 
-use crate::{Sphere, ray::Ray, shapes::Shape};
+use crate::{
+    Sphere,
+    ray::Ray,
+    shapes::{Shape, smooth_triangle::SmoothTriangle},
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
@@ -32,7 +36,7 @@ pub struct GpuShape {
     pub kind: u32,
     pub _padding: [u32; 2],
     inverse: [f32; 16],
-    add_data: [f32; 24],
+    add_data: [f32; 40],
 }
 
 #[repr(C)]
@@ -50,7 +54,7 @@ impl GpuShape {
             let inverse = sphere.inverse();
 
             let mut inverse_data: [f32; 16] = [0.0; 16];
-            let add_data: [f32; 24] = [0.0; 24];
+            let add_data: [f32; 40] = [0.0; 40];
 
             for i in 0..4 {
                 for j in 0..4 {
@@ -61,6 +65,37 @@ impl GpuShape {
             return GpuShape {
                 id: sphere.id as u32,
                 kind: 1,
+                _padding: [0; 2],
+                inverse: inverse_data,
+                add_data: add_data,
+            };
+        } else if let Some(smooth_tri) = shape.as_any().downcast_ref::<SmoothTriangle>() {
+            let inverse = smooth_tri.inverse();
+
+            let mut inverse_data: [f32; 16] = [0.0; 16];
+            let mut add_data: [f32; 40] = [0.0; 40];
+
+            for i in 0..4 {
+                for j in 0..4 {
+                    inverse_data[i * 4 + j] = inverse[(i, j)];
+                }
+            }
+            add_data[0..3].copy_from_slice(&[smooth_tri.p1.x, smooth_tri.p1.y, smooth_tri.p1.z]);
+            add_data[4..7].copy_from_slice(&[smooth_tri.p2.x, smooth_tri.p2.y, smooth_tri.p2.z]);
+            add_data[8..11].copy_from_slice(&[smooth_tri.p3.x, smooth_tri.p3.y, smooth_tri.p3.z]);
+            add_data[12..15].copy_from_slice(&[smooth_tri.n1.x, smooth_tri.n1.y, smooth_tri.n1.z]);
+            add_data[16..19].copy_from_slice(&[smooth_tri.n2.x, smooth_tri.n2.y, smooth_tri.n2.z]);
+            add_data[20..23].copy_from_slice(&[smooth_tri.n3.x, smooth_tri.n3.y, smooth_tri.n3.z]);
+            add_data[24..27].copy_from_slice(&[smooth_tri.e1.x, smooth_tri.e1.y, smooth_tri.e1.z]);
+            add_data[28..31].copy_from_slice(&[smooth_tri.e2.x, smooth_tri.e2.y, smooth_tri.e2.z]);
+            add_data[32..35].copy_from_slice(&[
+                smooth_tri.normal.x,
+                smooth_tri.normal.y,
+                smooth_tri.normal.z,
+            ]);
+            return GpuShape {
+                id: smooth_tri.id as u32,
+                kind: 2,
                 _padding: [0; 2],
                 inverse: inverse_data,
                 add_data: add_data,
@@ -77,6 +112,9 @@ pub mod tests {
 
     use crate::gpu::GPUAccel;
     use crate::ray::Ray;
+    use crate::shapes::Shape;
+    use crate::shapes::smooth_triangle::SmoothTriangle;
+    use crate::vec4::Vec4;
     use crate::{Sphere, matrix::Matrix, world::World};
 
     use super::{GpuRay, GpuShape};
@@ -100,16 +138,16 @@ pub mod tests {
 
         let ray = Ray::new(0.0, 0.0, -5.0, 0.0, 0.0, 1.0);
         let trans = Matrix::scaling(2.0, 2.0, 2.0);
-        let mut s1 = Sphere::with_transformation(trans);
-        s1.id = 1;
+        let s1 = Sphere::with_transformation(trans);
 
         let gpuray = GpuRay::from_ray(&ray);
-        let gpusphere = GpuShape::from_shape(Arc::new(s1).as_ref());
+        let gpu_sphere: Vec<Arc<dyn Shape + Send + Sync>> = vec![Arc::new(s1)];
 
         let rays = vec![gpuray];
-        let shapes: Vec<GpuShape> = vec![gpusphere];
 
-        gpu_accel.upload_rays_and_shapes(&rays, &shapes);
+        gpu_accel.populate_shapes(&gpu_sphere);
+
+        gpu_accel.upload_rays_and_shapes(&rays);
 
         gpu_accel.dispatch();
 
@@ -119,5 +157,41 @@ pub mod tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, 3.0);
         assert_eq!(intersections[1].t, 7.0);
+    }
+
+    #[test]
+    fn smooth_tri_gpu() {
+        let mut gpu_accel = GPUAccel::new("src/gpu/shader.wgsl");
+        let p1 = Vec4::point(0.0, 1.0, 0.0);
+        let p2 = Vec4::point(-1.0, 0.0, 0.0);
+        let p3 = Vec4::point(1.0, 0.0, 0.0);
+        let t = SmoothTriangle::new(p1, p2, p3, p1, p2, p3);
+
+        let r = Ray::new(0.0, 0.5, -2.0, 0.0, 0.0, 1.0);
+
+        let gpuray = GpuRay::from_ray(&r);
+        let gpu_sphere: Vec<Arc<dyn Shape + Send + Sync>> = vec![Arc::new(t)];
+
+        let rays = vec![gpuray];
+        gpu_accel.populate_shapes(&gpu_sphere);
+
+        gpu_accel.upload_rays_and_shapes(&rays);
+
+        gpu_accel.dispatch();
+
+        let result = gpu_accel.download_intersections();
+        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
+        println!("{:?}", intersections);
+        assert_eq!(intersections.len(), 1);
+        assert_eq!(intersections[0].t, 2.0);
+
+        let r = Ray::new(-1.0, 1.0, -2.0, 0.0, 0.0, 1.0);
+        let gpuray = GpuRay::from_ray(&r);
+        let rays = vec![gpuray];
+
+        gpu_accel.upload_rays_and_shapes(&rays);
+        let result = gpu_accel.download_intersections();
+        let intersections = GPUAccel::get_hits_for_ray(&result, 0);
+        assert_eq!(intersections.len(), 0);
     }
 }
