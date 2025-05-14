@@ -119,29 +119,9 @@ impl Camera {
     }
 
     pub fn render_gpu(&self, world: &World) -> Canvas {
-        let mut image: Canvas = Canvas::new(self.hsize, self.vsize);
+        let mut image = Canvas::new(self.hsize, self.vsize);
         let total_pixels: u64 = (self.hsize * self.vsize) as u64;
-
-        let mut gpu = GPUAccel::new("src/gpu/shader.wgsl");
-        gpu.populate_shapes(&world.shapes);
-
-        let pixels: Vec<(usize, usize)> = (0..self.vsize)
-            .flat_map(|y| (0..self.hsize).map(move |x| (x, y)))
-            .collect();
-
-        let mut rays: Vec<Ray> = Vec::new();
-        let mut gpu_rays: Vec<GpuRay> = Vec::new();
-        for (x, y) in pixels {
-            let ray = self.ray_for_pixel(x, y);
-            gpu_rays.push(GpuRay::from_ray(&ray));
-            rays.push(ray);
-        }
-
-        gpu.upload_rays_and_shapes(&gpu_rays);
-        gpu.dispatch();
-
-        let gpu_intersections = gpu.download_intersections();
-
+    
         let bar = ProgressBar::new(total_pixels);
         bar.set_style(
             ProgressStyle::with_template(
@@ -150,20 +130,47 @@ impl Camera {
             .unwrap()
             .progress_chars("=>-"),
         );
-
-        for (idx, ray) in rays.iter().enumerate() {
-            let intersections_for_ray = gpu.get_hits_for_ray(&gpu_intersections, idx);
-            let color = world.color_at_gpu(&intersections_for_ray, ray, self.reflection_max);
-
-            let x = idx % self.hsize;
-            let y = idx / self.hsize;
-            image.set_pixel(x, y, color);
-            bar.inc(1);
+    
+        let mut gpu = GPUAccel::new("src/gpu/shader.wgsl");
+        gpu.populate_shapes(&world.shapes);
+    
+        let pixels: Vec<(usize, usize)> = (0..self.vsize)
+            .flat_map(|y| (0..self.hsize).map(move |x| (x, y)))
+            .collect();
+    
+        let mut rays: Vec<Ray> = Vec::new();
+        let mut gpu_rays: Vec<GpuRay> = Vec::new();
+        for (x, y) in &pixels {
+            let ray = self.ray_for_pixel(*x, *y);
+            gpu_rays.push(GpuRay::from_ray(&ray));
+            rays.push(ray);
         }
+    
+        gpu.upload_rays_and_shapes(&gpu_rays);
+        gpu.dispatch();
+    
+        let gpu_intersections = gpu.download_intersections();
+    
+        // Parallel section
+        let results: Vec<((usize, usize), Color)> = pixels
+            .into_par_iter()
+            .enumerate()
+            .map(|(idx, (x, y))| {
+                let intersections_for_ray = gpu.get_hits_for_ray(&gpu_intersections, idx);
+                let color = world.color_at_gpu(&intersections_for_ray, &rays[idx], self.reflection_max);
+                bar.inc(1);
+                ((x, y), color)
+            })
+            .collect();
+    
         bar.finish();
+    
+        for ((x, y), color) in results {
+            image.set_pixel(x, y, color);
+        }
+    
         image
     }
-
     pub fn render(&mut self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
 

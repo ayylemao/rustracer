@@ -1,4 +1,4 @@
-const MAX_INTERSECTIONS_PER_RAY: u32 = 8u;
+const MAX_INTERSECTIONS_PER_RAY: u32 = 2u;
 const EPSILON: f32 = 0.0001;
 
 struct GpuRay {

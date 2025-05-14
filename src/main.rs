@@ -13,8 +13,8 @@ use raytracer::{
 };
 use std::{f32::consts::PI, sync::Arc};
 
-const WIDTH: usize = 400;
-const HEIGHT: usize = 200;
+const WIDTH: usize = 1500;
+const HEIGHT: usize = 750;
 
 fn main() {
     let mut p = Parser::new();

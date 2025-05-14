@@ -11,7 +11,7 @@ use crate::shapes::Shape;
 use crate::shapes::group::Group;
 pub mod gpu_types;
 
-const MAX_INTERSECTIONS_PER_RAY: u32 = 8;
+const MAX_INTERSECTIONS_PER_RAY: u32 = 2;
 
 pub struct GPUAccel<'a> {
     device: Device,
@@ -134,7 +134,7 @@ impl<'a> GPUAccel<'a> {
 
         let intersection_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Intersection Buffer"),
-            size: (rays.len() * 8 * std::mem::size_of::<GpuIntersection>()) as u64,
+            size: (rays.len() * MAX_INTERSECTIONS_PER_RAY as usize * std::mem::size_of::<GpuIntersection>()) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
