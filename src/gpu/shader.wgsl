@@ -67,10 +67,27 @@ fn intersect(@builtin(global_invocation_id) global_id: vec3<u32>) {
             intersect_sphere(origin_local.xyz, direction_local.xyz, shape.id, base, &hits_written);
         } else if shape.kind == 2u {
             intersect_triangle(origin_local.xyz, direction_local.xyz, shape.id, base, &hits_written, shape.data);
+        } else if shape.kind == 3u {
+            intersect_plane(origin_local.xyz, direction_local.xyz, shape.id, base, &hits_written);
         }
     }
 }
 
+fn intersect_plane(
+    ray_origin: vec3<f32>,
+    ray_direction: vec3<f32>,
+    shape_id: u32,
+    base: u32,
+    hits_written: ptr<function, u32>
+) {
+    if (abs(ray_direction.y) < EPSILON) {
+        return;
+    } else {
+        let t: f32 = -ray_origin.y / ray_direction.y;
+        intersections[base + *hits_written] = GpuIntersection(shape_id, t, -1.0, -1.0);
+        *hits_written = *hits_written + 1u;    
+    }
+}
 
 fn intersect_triangle(
     ray_origin: vec3<f32>,

@@ -8,6 +8,7 @@ use wgpu::{BindGroupLayout, Buffer, ComputePipeline, Device, Queue};
 
 use crate::intersection::Intersection;
 use crate::shapes::Shape;
+use crate::shapes::group::Group;
 pub mod gpu_types;
 
 const MAX_INTERSECTIONS_PER_RAY: u32 = 8;
@@ -235,9 +236,13 @@ impl<'a> GPUAccel<'a> {
 
     pub fn populate_shapes(&mut self, shapes: &'a Vec<Arc<dyn Shape + Send + Sync>>) {
         for shape in shapes {
-            let shape_ref = shape.as_ref();
-            self.gpu_shapes.push(GpuShape::from_shape(shape_ref));
-            self.shape_mapping.insert(shape_ref.id() as u32, shape_ref);
+            if let Some(group) = shape.as_any().downcast_ref::<Group>() {
+                self.populate_shapes(&group.children);
+            } else {
+                let shape_ref = shape.as_ref();
+                self.gpu_shapes.push(GpuShape::from_shape(shape_ref));
+                self.shape_mapping.insert(shape_ref.id() as u32, shape_ref);
+            }
         }
     }
 }
@@ -254,6 +259,11 @@ pub mod test {
         let w = World::default();
 
         gpu_accel.populate_shapes(&w.shapes);
-        println!("{:?}", gpu_accel.gpu_shapes)
+        println!("{:?}", gpu_accel.shape_mapping);
+        assert_eq!(gpu_accel.gpu_shapes[0].kind, 1);
+        assert_eq!(gpu_accel.gpu_shapes[1].kind, 1);
+        for (k, v) in gpu_accel.shape_mapping {
+            assert_eq!(k, v.id() as u32);
+        }
     }
 }

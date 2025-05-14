@@ -1,4 +1,6 @@
 use crate::SAMPLES_PER_PIXEL;
+use crate::gpu::GPUAccel;
+use crate::gpu::gpu_types::GpuRay;
 use crate::matrix::SqMatrix;
 use crate::{canvas::Canvas, color::Color, matrix::Matrix, ray::Ray, vec4::Vec4, world::World};
 use array_init::array_init;
@@ -116,7 +118,53 @@ impl Camera {
         Ray { origin, direction }
     }
 
-    pub fn render(&self, world: &World) -> Canvas {
+    pub fn render_gpu(&self, world: &World) -> Canvas {
+        let mut image: Canvas = Canvas::new(self.hsize, self.vsize);
+        let total_pixels: u64 = (self.hsize * self.vsize) as u64;
+
+        let mut gpu = GPUAccel::new("src/gpu/shader.wgsl");
+        gpu.populate_shapes(&world.shapes);
+
+        let pixels: Vec<(usize, usize)> = (0..self.vsize)
+            .flat_map(|y| (0..self.hsize).map(move |x| (x, y)))
+            .collect();
+
+        let mut rays: Vec<Ray> = Vec::new();
+        let mut gpu_rays: Vec<GpuRay> = Vec::new();
+        for (x, y) in pixels {
+            let ray = self.ray_for_pixel(x, y);
+            gpu_rays.push(GpuRay::from_ray(&ray));
+            rays.push(ray);
+        }
+
+        gpu.upload_rays_and_shapes(&gpu_rays);
+        gpu.dispatch();
+
+        let gpu_intersections = gpu.download_intersections();
+
+        let bar = ProgressBar::new(total_pixels);
+        bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] [{wide_bar}] {pos}/{len} ({percent}%)",
+            )
+            .unwrap()
+            .progress_chars("=>-"),
+        );
+
+        for (idx, ray) in rays.iter().enumerate() {
+            let intersections_for_ray = gpu.get_hits_for_ray(&gpu_intersections, idx);
+            let color = world.color_at_gpu(&intersections_for_ray, ray, self.reflection_max);
+
+            let x = idx % self.hsize;
+            let y = idx / self.hsize;
+            image.set_pixel(x, y, color);
+            bar.inc(1);
+        }
+        bar.finish();
+        image
+    }
+
+    pub fn render(&mut self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
 
         let total_pixels = (self.hsize * self.vsize) as u64;
@@ -169,9 +217,23 @@ impl Camera {
 
 #[cfg(test)]
 pub mod tests {
-    use std::f32::consts::{PI, SQRT_2};
+    use std::{
+        f32::consts::{PI, SQRT_2},
+        sync::Arc,
+    };
 
-    use crate::{color::Color, matrix::Matrix, vec4::Vec4, world::World};
+    use crate::{
+        Sphere,
+        color::Color,
+        light::PointLight,
+        material::Material,
+        matrix::Matrix,
+        obj_parser::Parser,
+        patterns::{Pattern, checker::Checker},
+        shapes::{Shape, plane::Plane},
+        vec4::Vec4,
+        world::World,
+    };
 
     use super::Camera;
 
@@ -233,5 +295,58 @@ pub mod tests {
         c.set_view(from, to, up);
         let image = c.render(&w);
         assert_eq!(image[(5, 5)], Color::new(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    pub fn gpu_render() {
+        let mut p = Parser::new();
+        let mut teapot = p.parse_file("objects/teapot.obj");
+        let mut tmat = Material::default();
+        tmat.reflective = 0.8;
+        tmat.set_color(Color::orange());
+        teapot.set_material(tmat);
+
+        teapot.set_transformation(
+            Matrix::translation(-4.0, 0.0, 3.0)
+                * Matrix::rotation_x(-PI / 2.0)
+                * Matrix::scaling(0.4, 0.4, 0.4),
+        );
+
+        let mut floor = Plane::new();
+        let mut mat = Material::default();
+        mat.reflective = 0.8;
+        let mut pat = Checker::new(Color::light_gray(), Color::dark_gray());
+        pat.set_transformation(Matrix::scaling(5.0, 5.0, 5.0));
+        mat.set_pattern(pat);
+        floor.set_material(mat);
+
+        let mut world: World = World::new(PointLight {
+            position: Vec4::point(-10.0, 20.0, -10.0),
+            intensity: Color::white(),
+        });
+
+        let mut sb = Sphere::new();
+        sb.material.set_color(Color::light_gray());
+        sb.material.reflective = 0.9;
+        sb.material.transparency = 0.9;
+        sb.material.diffuse = 0.1;
+        sb.material.ambient = 0.1;
+        sb.material.refractive_index = 1.5;
+
+        sb.set_transformation(Matrix::translation(1.0, 2.5, -1.0) * Matrix::scaling(2.5, 2.5, 2.5));
+
+        //world.add_shape(Arc::new(floor));
+        world.add_shape(Arc::new(teapot));
+        //world.add_shape(Arc::new(sb));
+        // === Camera ===
+        let mut camera = Camera::new(400, 200, PI / 3.0, 1, 16);
+        camera.set_view(
+            Vec4::point(0.0, 10.0, -20.0),
+            Vec4::point(0.0, 1.0, 0.0),
+            Vec4::vector(0.0, 1.0, 0.0),
+        );
+
+        //let image = camera.render_gpu(&world);
+        //image.save("test_gpu.png");
     }
 }

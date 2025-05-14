@@ -13,8 +13,8 @@ use raytracer::{
 };
 use std::{f32::consts::PI, sync::Arc};
 
-const WIDTH: usize = 1600;
-const HEIGHT: usize = 800;
+const WIDTH: usize = 400;
+const HEIGHT: usize = 200;
 
 fn main() {
     let mut p = Parser::new();
@@ -60,7 +60,7 @@ fn main() {
 
     world.add_shape(Arc::new(floor));
     world.add_shape(Arc::new(teapot));
-    world.add_shape(Arc::new(s));
+    //world.add_shape(Arc::new(s));
     world.add_shape(Arc::new(sb));
     // === Camera ===
     let mut camera = Camera::new(WIDTH, HEIGHT, PI / 3.0, 5, 16);
@@ -70,6 +70,6 @@ fn main() {
         Vec4::vector(0.0, 1.0, 0.0),
     );
 
-    let image = camera.render(&world);
-    image.save("teapot-super-16.png");
+    let image = camera.render_gpu(&world);
+    image.save("test_gpu.png");
 }

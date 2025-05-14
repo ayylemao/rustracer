@@ -85,6 +85,15 @@ impl World {
 
         surface + reflected + refracted
     }
+
+    pub fn color_at_gpu(&self, xs: &Vec<Intersection>, ray: &Ray, remaining: usize) -> Color {
+        if let Some(hit) = Intersection::hit(&xs) {
+            let comps = hit.prepare_computations(ray, &xs);
+            self.shade_hit(comps, remaining)
+        } else {
+            Color::black()
+        }
+    }
     pub fn color_at(&self, ray: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(ray);
         if let Some(hit) = Intersection::hit(&xs) {

@@ -3,7 +3,6 @@ name = "raytracer"
 version = "0.1.0"
 edition = "2024"
 
-
 [dependencies]
 array-init = "2.1.0"
 bytemuck = "1.23.0"
@@ -14,3 +13,4 @@ pollster = "0.4.0"
 rand = "0.9.1"
 rayon = "1.10.0"
 wgpu = "25.0.0"
+
